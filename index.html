@@ -1391,11 +1391,16 @@ function wireModalHandlers(){
   const tutDone = document.getElementById('tutorial-done'); if(tutDone) tutDone.onclick = tutorialFinish;
   const m = game.infoModal;
   if(m){
+    // Closing a modal is a DOM change, not just a state change — always
+    // re-render after the callback runs so #modal-root actually updates.
+    // (This is exactly the bug the Rules "Got it" button hit: its callback
+    // had nothing else to do, so with no guaranteed render() the modal's
+    // stale HTML just sat there looking clicked-but-frozen.)
     if(m.onYes){
-      document.getElementById('modal-yes').onclick = ()=>{ const f=m.onYes; game.infoModal=null; f(); };
-      document.getElementById('modal-no').onclick = ()=>{ const f=m.onNo; game.infoModal=null; f(); };
+      document.getElementById('modal-yes').onclick = ()=>{ const f=m.onYes; game.infoModal=null; f(); render(); };
+      document.getElementById('modal-no').onclick = ()=>{ const f=m.onNo; game.infoModal=null; f(); render(); };
     } else {
-      document.getElementById('modal-close').onclick = ()=>{ const f=m.onClose; game.infoModal=null; f(); };
+      document.getElementById('modal-close').onclick = ()=>{ const f=m.onClose; game.infoModal=null; f(); render(); };
     }
     return;
   }
