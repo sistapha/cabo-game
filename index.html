@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1C4A36">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Cabo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --felt-dark:#122E22;
+    --felt:#1C4A36;
+    --felt-light:#2E6B4E;
+    --gold:#C9A24B;
+    --gold-bright:#EAC873;
+    --cream:#F4EFE1;
+    --ink:#20201A;
+    --card-red:#A6392E;
+    --card-black:#20201A;
+    --danger:#B3423A;
+    --card-w: clamp(50px, 9.5vw, 82px);
+    --card-h: calc(var(--card-w) * 1.42);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:'Work Sans', sans-serif;
+    background:
+      radial-gradient(ellipse at top, var(--felt-light) 0%, var(--felt) 45%, var(--felt-dark) 100%);
+    color:var(--cream);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  h1,h2,h3{font-family:'Fraunces', serif; margin:0;}
+  button{font-family:'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent;}
+
+  /* ---------- Start screen ---------- */
+  #start-screen{
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:32px 20px; gap:22px; text-align:center;
+  }
+  .brand-title{
+    font-size: clamp(2.6rem, 10vw, 4.2rem);
+    font-weight:700;
+    letter-spacing:0.01em;
+    color:var(--gold-bright);
+    text-shadow: 0 2px 0 rgba(0,0,0,.35);
+  }
+  .brand-sub{
+    font-size:1.05rem; color:var(--cream); opacity:.85; max-width:360px; line-height:1.5;
+  }
+  .setup-card{
+    background:rgba(10,26,19,0.55);
+    border:1px solid rgba(234,200,115,0.35);
+    border-radius:18px;
+    padding:24px 22px;
+    width:100%;
+    max-width:360px;
+  }
+  .setup-label{ font-size:.85rem; text-transform:none; color:var(--gold-bright); margin-bottom:10px; font-weight:600; }
+  .ai-count-row{ display:flex; gap:10px; justify-content:center; margin-bottom:20px; }
+  .ai-count-btn{
+    flex:1; padding:14px 0; border-radius:12px; border:1.5px solid rgba(234,200,115,0.4);
+    background:transparent; color:var(--cream); font-size:1.1rem; font-weight:600; cursor:pointer;
+  }
+  .ai-count-btn.selected{ background:var(--gold-bright); color:var(--ink); border-color:var(--gold-bright); }
+  .diff-btn{
+    flex:1; padding:12px 0; border-radius:12px; border:1.5px solid rgba(234,200,115,0.4);
+    background:transparent; color:var(--cream); font-size:.95rem; font-weight:600; cursor:pointer;
+  }
+  .diff-btn.selected{ background:var(--gold-bright); color:var(--ink); border-color:var(--gold-bright); }
+  .difficulty-blurb{ font-size:.8rem; opacity:.75; margin:-8px 0 18px; min-height:2.2em; line-height:1.4; }
+  .info-chip{ background:rgba(234,200,115,0.15); border:1px solid rgba(234,200,115,0.4); border-radius:999px; padding:6px 14px; font-size:.78rem; color:var(--gold-bright); font-weight:600; }
+
+  @keyframes tutorial-pulse{
+    0%,100%{ box-shadow:0 0 0 3px var(--gold-bright), 0 0 16px 3px rgba(234,200,115,0.55); }
+    50%{ box-shadow:0 0 0 3px var(--gold-bright), 0 0 28px 9px rgba(234,200,115,0.9); }
+  }
+  .tutorial-glow{ animation: tutorial-pulse 1.3s ease-in-out infinite; }
+  .tutorial-bar{
+    position:fixed; left:0; right:0; bottom:0; z-index:60;
+    background:rgba(8,20,15,0.96); border-top:2px solid var(--gold-bright);
+    padding:12px 16px calc(env(safe-area-inset-bottom) + 12px);
+    box-shadow:0 -8px 24px rgba(0,0,0,.4);
+  }
+  .tutorial-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .tutorial-count{ font-size:.72rem; color:var(--gold-bright); font-weight:700; letter-spacing:.02em; }
+  .tutorial-skip{ background:none; border:none; color:rgba(244,239,225,0.6); font-size:.72rem; text-decoration:underline; cursor:pointer; padding:2px; }
+  .tutorial-text{ font-size:.92rem; line-height:1.45; color:var(--cream); margin-bottom:8px; }
+  .tutorial-next-btn{
+    padding:11px 16px; border-radius:10px; border:none; background:var(--gold-bright); color:var(--ink);
+    font-weight:700; font-size:.92rem; cursor:pointer;
+  }
+  .tutorial-waiting{ font-size:.82rem; color:var(--gold-bright); font-weight:600; opacity:.9; }
+  #start-btn{
+    width:100%; padding:16px; border-radius:12px; border:none; background:var(--gold-bright);
+    color:var(--ink); font-size:1.15rem; font-weight:700; cursor:pointer;
+  }
+  #start-rules-btn, #stats-btn{
+    margin-top:14px; width:100%; padding:12px; border-radius:12px; border:1.5px solid rgba(244,239,225,0.35);
+    background:transparent; color:var(--cream); font-size:.95rem; cursor:pointer;
+  }
+  #tutorial-btn{
+    margin-top:10px; width:100%; padding:14px; border-radius:12px; border:1.5px solid var(--gold-bright);
+    background:rgba(234,200,115,0.12); color:var(--gold-bright); font-size:1rem; font-weight:700; cursor:pointer;
+  }
+  .stat-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin:14px 0; }
+  .stat-tile{ background:rgba(0,0,0,0.05); border-radius:10px; padding:10px 12px; }
+  .stat-tile .stat-value{ font-family:'Fraunces',serif; font-size:1.4rem; font-weight:700; display:block; line-height:1.2; }
+  .stat-tile .stat-label{ font-size:.72rem; opacity:.7; }
+  .stat-chart{ margin:12px 0 4px; }
+  .stat-section-title{ font-family:'Fraunces',serif; margin:16px 0 4px; font-size:1.05rem; }
+  .diff-breakdown-row{ display:flex; justify-content:space-between; font-size:.85rem; padding:6px 2px; border-bottom:1px solid rgba(0,0,0,0.08); }
+  .reset-stats-link{ background:none; border:none; color:var(--card-red); font-size:.8rem; text-decoration:underline; cursor:pointer; margin-top:16px; padding:4px 0; }
+  #rules-panel{
+    max-width:360px; text-align:left; overflow:hidden; max-height:0; transition:max-height .3s ease;
+    font-size:.92rem; line-height:1.55; color:rgba(244,239,225,0.9);
+  }
+  #rules-panel.open{ max-height:900px; margin-top:6px; }
+  #rules-panel h4{ color:var(--gold-bright); margin:14px 0 4px; font-family:'Fraunces',serif; }
+  #rules-panel p{ margin:4px 0; }
+
+  /* ---------- Game screen ---------- */
+  #game-screen{ display:none; flex-direction:column; min-height:100vh; padding: env(safe-area-inset-top) 10px calc(env(safe-area-inset-bottom) + 10px); }
+  #app{ display:flex; flex-direction:column; flex:1; gap:10px; padding-top:10px; }
+
+  .scoreboard{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  .score-chip{
+    background:rgba(10,26,19,0.5); border:1px solid rgba(234,200,115,0.25);
+    border-radius:999px; padding:6px 14px; display:flex; gap:8px; align-items:baseline;
+    font-size:.85rem;
+  }
+  .score-chip.active{ border-color:var(--gold-bright); box-shadow:0 0 0 2px rgba(234,200,115,0.25); }
+  .score-name{ color:var(--cream); font-weight:600; }
+  .score-num{ color:var(--gold-bright); font-weight:700; }
+
+  .opponents-row{ display:flex; flex-wrap:wrap; gap:22px; justify-content:center; padding:6px 0; }
+  .seat{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .seat-label{ font-size:.85rem; font-weight:600; color:var(--cream); opacity:.9; }
+  .cabo-tag{ background:var(--danger); color:var(--cream); font-size:.68rem; padding:2px 7px; border-radius:999px; margin-left:4px; letter-spacing:.03em; }
+
+  .grid{ display:grid; grid-template-columns: repeat(2, var(--card-w)); gap:7px; }
+  .slot{
+    width:var(--card-w); height:var(--card-h); border-radius:9px; border:none; padding:0;
+    cursor:default; position:relative; background:transparent; transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .slot.selectable{ cursor:pointer; box-shadow:0 0 0 3px var(--gold-bright), 0 8px 16px rgba(0,0,0,.4); transform:translateY(-3px); }
+  .card-back{
+    width:100%; height:100%; border-radius:9px; box-sizing:border-box;
+    background: repeating-linear-gradient(45deg, var(--felt-dark), var(--felt-dark) 6px, var(--felt) 6px, var(--felt) 12px);
+    border:2px solid var(--gold);
+  }
+  .card-back.empty{ background:rgba(255,255,255,0.06); border:2px dashed rgba(244,239,225,0.3); }
+  .card-face{
+    width:100%; height:100%; border-radius:9px; background:var(--cream); border:2px solid rgba(0,0,0,0.15);
+    box-sizing:border-box; position:relative; display:flex; align-items:center; justify-content:center;
+  }
+  .card-face .card-rank{ position:absolute; top:3px; left:5px; font-family:'Fraunces',serif; font-weight:700; font-size:calc(var(--card-w)*0.22); line-height:1; }
+  .card-face .card-rank-br{ top:auto; left:auto; bottom:3px; right:5px; transform:rotate(180deg); }
+  .card-face .card-suit{ font-size:calc(var(--card-w)*0.4); }
+  .card-face.suit-red .card-rank, .card-face.suit-red .card-suit{ color:var(--card-red); }
+  .card-face.suit-black .card-rank, .card-face.suit-black .card-suit{ color:var(--card-black); }
+
+  /* One-shot "pop" cue on a slot whose card just changed (swap/blind-swap/king-swap).
+     Uses a keyframe animation rather than a transition, since the slot is a
+     freshly-rendered element each time (innerHTML rebuild) with no prior
+     state to transition from — transitions would never actually play. */
+  @keyframes card-pop{
+    0%{ transform:scale(.82) translateY(6px); opacity:.35; }
+    60%{ transform:scale(1.06); opacity:1; }
+    100%{ transform:scale(1); }
+  }
+  .card-changed{ animation: card-pop .35s ease-out; }
+  @media (prefers-reduced-motion: reduce){
+    .card-changed{ animation:none; }
+    .tutorial-glow{ animation:none; box-shadow:0 0 0 3px var(--gold-bright), 0 0 20px 5px rgba(234,200,115,0.7); }
+  }
+
+  .center-row{ display:flex; gap:26px; justify-content:center; align-items:flex-start; padding:10px 0; }
+  .pile-wrap{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .pile{ width:var(--card-w); height:var(--card-h); border:none; padding:0; background:transparent; position:relative; cursor:default; border-radius:9px; }
+  .pile:not(:disabled){ cursor:pointer; }
+  .pile:not(:disabled) .card-back, .pile:not(:disabled) .card-face{ box-shadow:0 0 0 3px var(--gold-bright), 0 8px 16px rgba(0,0,0,.4); }
+  .pile-count{ position:absolute; bottom:-8px; right:-8px; background:var(--gold-bright); color:var(--ink); font-size:.7rem; font-weight:700; border-radius:999px; padding:2px 6px; }
+  .pile-caption{ font-size:.72rem; opacity:.75; letter-spacing:.03em; }
+
+  .player-seat{ margin-top:auto; padding-top:6px; }
+
+  .action-bar{ display:flex; gap:10px; justify-content:center; padding:10px 0 4px; }
+  .action-bar button{
+    padding:13px 18px; border-radius:12px; border:1.5px solid rgba(234,200,115,0.4);
+    background:rgba(10,26,19,0.5); color:var(--cream); font-weight:600; font-size:.95rem; cursor:pointer;
+  }
+  .action-bar button:disabled{ opacity:.35; cursor:default; }
+  #btn-cabo:not(:disabled){ background:var(--danger); border-color:var(--danger); color:var(--cream); }
+  #btn-fast.on{ background:var(--gold-bright); border-color:var(--gold-bright); color:var(--ink); }
+
+  .hint-banner{
+    position:fixed; top:calc(env(safe-area-inset-top) + 10px); left:50%; transform:translateX(-50%);
+    background:var(--gold-bright); color:var(--ink); padding:9px 18px; border-radius:999px;
+    font-size:.85rem; font-weight:600; box-shadow:0 6px 16px rgba(0,0,0,.35); z-index:20; text-align:center; max-width:88vw;
+  }
+
+  .overlay{
+    position:fixed; inset:0; background:rgba(8,16,12,0.62); display:flex; align-items:center; justify-content:center;
+    padding:20px; z-index:50;
+  }
+  .modal{
+    background:var(--cream); color:var(--ink); border-radius:16px; padding:26px 22px; width:100%; max-width:400px;
+    box-shadow:0 24px 60px rgba(0,0,0,.5); max-height:85vh; overflow-y:auto;
+  }
+  .modal.wide{ max-width:540px; }
+  .modal h3{ font-size:1.35rem; margin-bottom:8px; }
+  .modal p{ line-height:1.5; margin:6px 0; color:#3a3a30; }
+  .peek-cards{ display:flex; gap:14px; justify-content:center; margin:18px 0; }
+  .peek-cards .card-face{ width:88px; height:126px; }
+  .modal-actions{ display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
+  .modal-actions button{
+    flex:1; min-width:120px; padding:13px 14px; border-radius:11px; border:none; cursor:pointer;
+    background:var(--gold-bright); color:var(--ink); font-weight:700; font-size:.95rem;
+  }
+  .modal-actions button.secondary{ background:transparent; border:1.5px solid #00000030; color:#3a3a30; font-weight:600; }
+  .modal-actions button:disabled{ opacity:.35; cursor:default; }
+  .results-list{ margin-top:12px; display:flex; flex-direction:column; gap:6px; }
+  .result-row{ display:flex; justify-content:space-between; gap:10px; padding:8px 10px; background:rgba(0,0,0,0.05); border-radius:8px; font-size:.9rem; flex-wrap:wrap; }
+  .result-row .hand{ font-family:'Fraunces',serif; opacity:.75; }
+  .log-list{ margin-top:10px; max-height:50vh; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+  .log-row{ font-size:.85rem; padding:7px 10px; background:rgba(0,0,0,0.05); border-radius:8px; }
+
+  @media (max-width:420px){
+    .center-row{ gap:18px; }
+    .opponents-row{ gap:14px; }
+  }
+</style>
+</head>
+<body>
+
+  <div id="start-screen">
+    <div class="brand-title">Cabo</div>
+    <div class="brand-sub">Memory, bluffing, and just enough cruelty. Play solo against the computer.</div>
+    <div class="setup-card">
+      <div class="setup-label">How many opponents?</div>
+      <div class="ai-count-row">
+        <button class="ai-count-btn" data-count="1">1</button>
+        <button class="ai-count-btn selected" data-count="2">2</button>
+        <button class="ai-count-btn" data-count="3">3</button>
+      </div>
+      <div class="setup-label">Difficulty</div>
+      <div class="ai-count-row difficulty-row">
+        <button class="diff-btn" data-diff="easy">Easy</button>
+        <button class="diff-btn selected" data-diff="normal">Normal</button>
+        <button class="diff-btn" data-diff="hard">Hard</button>
+      </div>
+      <div class="difficulty-blurb" id="difficulty-blurb">Solid, straightforward play \u2014 a fair fight.</div>
+      <button id="start-btn">Start game</button>
+      <button id="tutorial-btn">Interactive tutorial</button>
+      <button id="start-rules-btn">How to play</button>
+      <button id="stats-btn">Your stats</button>
+      <div id="rules-panel"></div>
+    </div>
+  </div>
+
+  <div id="game-screen">
+    <div id="app"></div>
+  </div>
+
+  <div id="modal-root"></div>
+
+<script>
+/* =========================================================
+   CABO — solo vs. AI
+   ========================================================= */
+
+const HUMAN_ID = 0;
+const SUITS = ['S','H','D','C'];
+const SUIT_SYMBOL = { S:'\u2660', H:'\u2665', D:'\u2666', C:'\u2663' };
+const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const AI_NAMES = ['Milo','Ana','Theo','Wren'];
+const UNSEEN_AVG = 6.75;
+
+/* ---------- Full-deck value counts (for the Hard AI's exact odds) ---------- */
+function buildValueCounts(){
+  const counts = {};
+  for(let v=0; v<=13; v++) counts[v] = (v===0) ? 1 : (v===13 ? 3 : 4);
+  return counts;
+}
+
+let uidCounter = 1;
+let game = null;
+let fastForward = false;
+// Scales down the deliberately-paced AI "thinking" delays when Fast mode is on.
+function aiDelay(ms){ return fastForward ? Math.max(60, Math.round(ms/5)) : ms; }
+
+/* ---------- Card helpers ---------- */
+function rankValue(rank, suit){
+  if(rank==='A') return 1;
+  if(rank==='J') return 11;
+  if(rank==='Q') return 12;
+  if(rank==='K') return suit==='D' ? 0 : 13;
+  return parseInt(rank,10);
+}
+function buildDeck(){
+  const deck = [];
+  for(const s of SUITS){
+    for(const r of RANKS){
+      deck.push({ uid: uidCounter++, suit:s, rank:r, value: rankValue(r,s), publicKnown:false });
+    }
+  }
+  return deck;
+}
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+function hasPower(card){
+  if(card.rank==='K') return card.suit!=='D';
+  return ['7','8','9','10','J','Q'].includes(card.rank);
+}
+function powerType(card){
+  if(['7','8'].includes(card.rank)) return 'peek-own';
+  if(['9','10'].includes(card.rank)) return 'peek-opp';
+  if(['J','Q'].includes(card.rank)) return 'blind-swap';
+  if(card.rank==='K') return 'king';
+  return null;
+}
+function cardLabel(card){ return `${card.rank}${SUIT_SYMBOL[card.suit]}`; }
+function isRed(suit){ return suit==='H' || suit==='D'; }
+
+/* ---------- Interactive tutorial ---------- */
+function mkCard(rank, suit){ return { uid: uidCounter++, suit, rank, value: rankValue(rank,suit), publicKnown:false }; }
+function buildTutorialSequence(){
+  return [
+    mkCard('3','S'),   // 1  You slot0
+    mkCard('K','D'),   // 2  You slot1 (value 0 — a hidden gem)
+    mkCard('9','C'),   // 3  You slot2
+    mkCard('5','D'),   // 4  You slot3
+    mkCard('6','H'),   // 5  Coach slot0
+    mkCard('8','D'),   // 6  Coach slot1
+    mkCard('10','S'),  // 7  Coach slot2
+    mkCard('Q','S'),   // 8  Coach slot3
+    mkCard('4','C'),   // 9  initial discard flip
+    mkCard('2','H'),   // 10 you draw (turn 1)
+    mkCard('A','C'),   // 11 coach auto-draw -> becomes discard top
+    mkCard('3','D'),   // 12 coach auto-draw
+    mkCard('8','S'),   // 13 you draw (peek-own power)
+    mkCard('4','H'),   // 14 coach auto-draw
+    mkCard('9','D'),   // 15 you draw (peek-opp power)
+    mkCard('5','C'),   // 16 coach auto-draw
+    mkCard('J','H'),   // 17 you draw (blind-swap power)
+    mkCard('6','D'),   // 18 coach auto-draw
+    mkCard('K','H'),   // 19 you draw (king power)
+    mkCard('7','C'),   // 20 coach auto-draw
+    mkCard('2','D'),   // 21 coach's final turn after your Cabo call
+  ];
+}
+const TUTORIAL_STEPS = [
+  { type:'info', msg:"Welcome! I'm Coach. Let's play a real practice round together \u2014 I'll tell you exactly what to tap, one step at a time." },
+  { type:'info', msg:"Your grid has 4 cards: the two you just peeked (bottom row), and two total mysteries (top row). The whole game is about making these four add up to as little as possible." },
+  { type:'action', restrict:{turnAction:'deck'}, highlight:{type:'pile', which:'draw'}, msg:"On your turn you either draw from the deck or take the discard pile's top card. Let's start simple \u2014 tap the draw pile.", advanceOn:'drew-deck' },
+  { type:'action', restrict:{drawnAction:'swap'}, highlight:{type:'slot', player:0, slot:2}, msg:"Whatever you drew, compare it to the bad card you peeked at (the 9). If it's better, tap 'Swap into your grid', then tap that 9 to replace it.", advanceOn:'swapped' },
+  { type:'action', restrict:{turnAction:'discard'}, highlight:{type:'pile', which:'discard'}, msg:"Coach just discarded a card, face-up. Unlike the deck, you already know exactly what it is before you take it \u2014 tap the discard pile to grab it.", advanceOn:'drew-discard' },
+  { type:'action', highlight:{type:'slot', player:0, slot:3}, msg:"Discard-pile cards MUST go into your grid \u2014 no backing out. Tap your other peeked card (the 5) to swap this one in.", advanceOn:'swapped' },
+  { type:'info', msg:"Nice. And here's the twist: any card taken from the discard pile stays face-up for everyone, forever \u2014 a great way to track what opponents are holding, too." },
+  { type:'action', restrict:{turnAction:'deck'}, highlight:{type:'pile', which:'draw'}, msg:"Now let's learn the power cards. Tap the draw pile.", advanceOn:'drew-deck' },
+  { type:'action', restrict:{drawnAction:'power'}, msg:"You drew a power card! Instead of swapping it in, tap 'Discard & use power' to trigger its ability.", advanceOn:'used-power:peek-own' },
+  { type:'action', highlight:{type:'slot', player:0, slot:0}, msg:"7s and 8s let you peek at one of your OWN face-down cards. Tap your other unknown card to see what it is.", advanceOn:'peeked-own' },
+  { type:'info', msg:"Now you know three of your four cards. Only one true mystery left!" },
+  { type:'action', restrict:{turnAction:'deck'}, highlight:{type:'pile', which:'draw'}, msg:"Draw pile again, please.", advanceOn:'drew-deck' },
+  { type:'action', restrict:{drawnAction:'power'}, msg:"Another power card. Discard it to use its power.", advanceOn:'used-power:peek-opp' },
+  { type:'action', highlight:{type:'seat', player:1}, msg:"9s and 10s let you peek at ONE of an opponent's cards. Tap any of Coach's cards to spy on it.", advanceOn:'peeked-opp' },
+  { type:'info', msg:"That's valuable intel \u2014 now you know something Coach has no idea you know." },
+  { type:'action', restrict:{turnAction:'deck'}, highlight:{type:'pile', which:'draw'}, msg:"One more time \u2014 tap the draw pile.", advanceOn:'drew-deck' },
+  { type:'action', restrict:{drawnAction:'power'}, msg:"A Jack or Queen! Discard it to use its power.", advanceOn:'used-power:blind-swap' },
+  { type:'action', highlight:{type:'seat', player:1}, msg:"Jacks and Queens let you blind-swap ANY two cards on the table \u2014 even two of an opponent's, without either of you seeing the values! Tap one of Coach's cards, then tap another of Coach's cards to swap them.", advanceOn:'blind-swapped' },
+  { type:'info', msg:"Neither of you knows what just happened in Coach's grid. That's the fun of a blind swap \u2014 use it to bury a bad card you know about, or just to scramble an opponent's memory." },
+  { type:'action', restrict:{turnAction:'deck'}, highlight:{type:'pile', which:'draw'}, msg:"Last power card, promise. Tap the draw pile.", advanceOn:'drew-deck' },
+  { type:'action', restrict:{drawnAction:'power'}, msg:"A King! Discard it to use its power.", advanceOn:'used-power:king' },
+  { type:'action', highlight:{type:'seat', player:1}, msg:"Kings let you peek at ANY card, then choose whether to swap it with another. Tap one of Coach's cards to peek \u2014 then try tapping 'Leave it' when asked.", advanceOn:'king-resolved' },
+  { type:'info', msg:"You've now used every power in the game. Let's see if you're ready to end the round." },
+  { type:'action', restrict:{turnAction:'cabo'}, highlight:{type:'cabo-button'}, msg:"You know three of your four cards, and together they only add up to a handful of points. When you're confident you're low, tap 'Call CABO' instead of drawing.", advanceOn:'called-cabo' },
+  { type:'info', msg:"Calling Cabo means everyone else gets exactly one more turn, then every hand flips face-up. If you weren't actually the lowest, you'd take a 10-point penalty \u2014 so only call when you're fairly sure. Let's see how you did!" }
+];
+function tutorialCheckpoint(name){
+  if(!game || !game.tutorialActive) return;
+  const step = TUTORIAL_STEPS[game.tutorialStep];
+  if(step && step.type==='action' && step.advanceOn===name){
+    tutorialGoTo(game.tutorialStep+1);
+  }
+}
+function tutorialGoTo(idx){
+  game.tutorialStep = idx;
+  const step = TUTORIAL_STEPS[idx];
+  game.tutorialHighlight = step ? (step.highlight || null) : null;
+}
+function tutorialNext(){ tutorialGoTo(game.tutorialStep+1); render(); }
+function tutorialSkip(){ game.tutorialActive = false; showStartScreen(); }
+function tutorialFinish(){ game.tutorialActive = false; showStartScreen(); }
+function startTutorial(){
+  const players = [
+    { id:0, name:'You', isHuman:true, slots:[], roundScore:0, totalScore:0 },
+    { id:1, name:'Coach', isHuman:false, isTutorialBot:true, slots:[], roundScore:0, totalScore:0,
+      memory:{ own:[null,null,null,null], opp:{0:[null,null,null,null]} } }
+  ];
+  game = {
+    players, round:1, drawPile:[], discardPile:[], turnOrder:[0,1], turnIdx:0,
+    mode:'peek', pendingAction:null, pendingCard:null, pendingSource:null,
+    caboCallerId:null, finalTurnsLeft:0, log:[], infoModal:null, showLog:false,
+    difficulty:'normal', fullValueCounts: buildValueCounts(), initialDrawPileSize:0,
+    tutorialActive:true, tutorialStep:0, tutorialHighlight:null
+  };
+  const seq = buildTutorialSequence();
+  const deck = seq.slice().reverse();
+  for(const p of game.players){
+    p.slots = [deck.pop(), deck.pop(), deck.pop(), deck.pop()];
+    p.roundScore = 0;
+  }
+  game.drawPile = deck;
+  game.discardPile = [game.drawPile.pop()];
+  game.initialDrawPileSize = game.drawPile.length;
+  logMsg('Tutorial round begins.');
+  render();
+}
+function runTutorialBotTurn(p){
+  if(!ensureDrawPile()) return;
+  const drawn = game.drawPile.pop();
+  logMsg(`${p.name} drew a card and discarded it.`);
+  setTimeout(()=>{
+    game.discardPile.push(drawn);
+    advanceTurn();
+  }, 700);
+}
+
+/* ---------- Game setup ---------- */
+function newGame(numAI, difficulty){
+  const players = [];
+  players.push({ id:0, name:'You', isHuman:true, slots:[], roundScore:0, totalScore:0 });
+  const names = shuffle(AI_NAMES.slice());
+  for(let i=0;i<numAI;i++){
+    players.push({
+      id:i+1, name:names[i], isHuman:false, slots:[], roundScore:0, totalScore:0,
+      memory:{ own:[null,null,null,null], opp:{} },
+      riskiness: 4 + Math.random()*4,
+      difficulty: difficulty || 'normal'
+    });
+  }
+  for(const p of players){
+    if(!p.isHuman){
+      for(const other of players){ if(other.id!==p.id) p.memory.opp[other.id] = [null,null,null,null]; }
+    }
+  }
+  game = {
+    players, round:1, drawPile:[], discardPile:[], turnOrder:[], turnIdx:0,
+    mode:'peek', pendingAction:null, pendingCard:null, pendingSource:null,
+    caboCallerId:null, finalTurnsLeft:0, log:[], infoModal:null, showLog:false,
+    difficulty: difficulty || 'normal', fullValueCounts: buildValueCounts(), initialDrawPileSize: 0
+  };
+  startRound();
+}
+
+function startRound(){
+  const deck = shuffle(buildDeck());
+  for(const p of game.players){
+    p.slots = [deck.pop(), deck.pop(), deck.pop(), deck.pop()];
+    p.roundScore = 0;
+    if(!p.isHuman){
+      p.memory.own = [null, null, p.slots[2].value, p.slots[3].value];
+      for(const oid in p.memory.opp) p.memory.opp[oid] = [null,null,null,null];
+    }
+  }
+  game.drawPile = deck;
+  game.discardPile = [game.drawPile.pop()];
+  game.initialDrawPileSize = game.drawPile.length;
+  const startIdx = (game.round-1) % game.players.length;
+  game.turnOrder = [];
+  for(let i=0;i<game.players.length;i++){
+    game.turnOrder.push(game.players[(startIdx+i)%game.players.length].id);
+  }
+  game.turnIdx = 0;
+  game.caboCallerId = null;
+  game.finalTurnsLeft = 0;
+  game.mode = 'peek';
+  game.pendingAction = null;
+  game.pendingCard = null;
+  game.pendingSource = null;
+  logMsg(`Round ${game.round} begins.`);
+  render();
+}
+
+// Tactile confirmation for key moments — Android/Chrome only (iOS Safari has
+// no Vibration API), so this quietly does nothing on iPhone/iPad/Mac.
+function hapticPulse(pattern){
+  try{ if(navigator.vibrate) navigator.vibrate(pattern); }catch(e){ /* unsupported */ }
+}
+function getPlayer(id){ return game.players.find(p=>p.id===id); }
+function currentPlayerId(){ return game.turnOrder[game.turnIdx]; }
+function logMsg(msg){ game.log.push(msg); if(game.log.length>250) game.log.shift(); }
+
+/* ---------- Turn flow ---------- */
+function beginTurn(){
+  const p = getPlayer(currentPlayerId());
+  if(p.isHuman){
+    game.mode = 'human-turn';
+    render();
+  } else if(p.isTutorialBot){
+    game.mode = 'ai-turn';
+    render();
+    setTimeout(()=>runTutorialBotTurn(p), 800);
+  } else {
+    game.mode = 'ai-turn';
+    render();
+    setTimeout(()=>runAiTurn(p), aiDelay(850));
+  }
+}
+function advanceTurn(){
+  game.pendingAction = null;
+  game.pendingCard = null;
+  game.pendingSource = null;
+  if(game.caboCallerId!==null){
+    game.finalTurnsLeft--;
+    if(game.finalTurnsLeft<=0){ endRound(); return; }
+  }
+  game.turnIdx = (game.turnIdx+1) % game.turnOrder.length;
+  beginTurn();
+}
+function callCabo(playerId){
+  game.caboCallerId = playerId;
+  game.finalTurnsLeft = game.players.length - 1;
+  logMsg(`${getPlayer(playerId).name} called CABO!`);
+  hapticPulse(playerId===HUMAN_ID ? 45 : [15,40,15]);
+  if(playerId===HUMAN_ID) tutorialCheckpoint('called-cabo');
+  advanceTurn();
+}
+
+function ensureDrawPile(){
+  if(game.drawPile.length===0){
+    if(game.discardPile.length<=1){
+      logMsg('The draw pile ran out. Round ends immediately.');
+      endRound();
+      return false;
+    }
+    const top = game.discardPile.pop();
+    game.drawPile = shuffle(game.discardPile);
+    game.discardPile = [top];
+    logMsg('The draw pile was reshuffled from the discard pile.');
+  }
+  return true;
+}
+
+/* ---------- Memory / shared mechanics ---------- */
+function clearMemoryForSlot(playerId, slotIdx){
+  for(const p of game.players){
+    if(p.isHuman) continue;
+    if(p.id===playerId) p.memory.own[slotIdx] = null;
+    else if(p.memory.opp[playerId]) p.memory.opp[playerId][slotIdx] = null;
+  }
+}
+function swapSlotsRaw(a,b){
+  const pa = getPlayer(a.player), pb = getPlayer(b.player);
+  const tmp = pa.slots[a.slot];
+  pa.slots[a.slot] = pb.slots[b.slot];
+  pb.slots[b.slot] = tmp;
+  markChanged(a); markChanged(b);
+}
+function markChanged(ref){
+  if(!game) return;
+  if(!game.lastChanged) game.lastChanged = [];
+  game.lastChanged.push({ player:ref.player, slot:ref.slot });
+}
+function doBlindSwap(a,b){
+  swapSlotsRaw(a,b);
+  clearMemoryForSlot(a.player, a.slot);
+  clearMemoryForSlot(b.player, b.slot);
+}
+function doKingSwap(actor, peeked, target){
+  const peekedCard = getPlayer(peeked.player).slots[peeked.slot];
+  swapSlotsRaw(peeked, target);
+  clearMemoryForSlot(peeked.player, peeked.slot);
+  clearMemoryForSlot(target.player, target.slot);
+  if(!actor.isHuman){
+    if(target.player===actor.id) actor.memory.own[target.slot] = peekedCard.value;
+    else {
+      if(!actor.memory.opp[target.player]) actor.memory.opp[target.player] = [null,null,null,null];
+      actor.memory.opp[target.player][target.slot] = peekedCard.value;
+    }
+  }
+}
+
+/* ---------- Human actions ---------- */
+function humanDrawDeck(){
+  if(!ensureDrawPile()){ render(); return; }
+  const card = game.drawPile.pop();
+  game.pendingCard = card;
+  game.pendingSource = 'deck';
+  game.mode = 'human-drawn';
+  tutorialCheckpoint('drew-deck');
+  render();
+}
+function humanDrawDiscard(){
+  if(game.discardPile.length===0) return;
+  const card = game.discardPile.pop();
+  game.pendingCard = card;
+  game.pendingSource = 'discard';
+  game.pendingAction = { type:'swap-own' };
+  game.mode = 'awaiting-target';
+  tutorialCheckpoint('drew-discard');
+  render();
+}
+function discardPendingForPower(){
+  const card = game.pendingCard;
+  game.discardPile.push(card);
+  game.pendingCard = null;
+  const pt = powerType(card);
+  logMsg(`You discarded ${cardLabel(card)} to use its power.`);
+  hapticPulse(20);
+  tutorialCheckpoint('used-power:'+pt);
+  beginPowerFlow(pt);
+}
+function discardPendingNoEffect(){
+  const c = game.pendingCard;
+  game.discardPile.push(c);
+  game.pendingCard = null;
+  logMsg(`You discarded ${cardLabel(c)}.`);
+  endHumanTurnAfterAction();
+}
+function beginPowerFlow(pt){
+  if(pt==='peek-own') game.pendingAction = { type:'peek-own' };
+  else if(pt==='peek-opp') game.pendingAction = { type:'peek-opp' };
+  else if(pt==='blind-swap') game.pendingAction = { type:'blindswap-1' };
+  else if(pt==='king') game.pendingAction = { type:'king-peek' };
+  game.mode = 'awaiting-target';
+  render();
+}
+function endHumanTurnAfterAction(){ advanceTurn(); }
+
+function isSelectable(playerId, slotIdx){
+  const a = game.pendingAction;
+  if(!a) return false;
+  switch(a.type){
+    case 'swap-own': return playerId===HUMAN_ID;
+    case 'peek-own': return playerId===HUMAN_ID;
+    case 'peek-opp': return playerId!==HUMAN_ID;
+    case 'blindswap-1': return true;
+    case 'blindswap-2': return !(playerId===a.first.player && slotIdx===a.first.slot);
+    case 'king-peek': return true;
+    case 'king-swap-target': return !(playerId===a.peeked.player && slotIdx===a.peeked.slot);
+    default: return false;
+  }
+}
+function onSlotClick(playerId, slotIdx){
+  if(game.infoModal) return;
+  if(game.mode!=='awaiting-target') return;
+  if(!isSelectable(playerId, slotIdx)) return;
+  const a = game.pendingAction;
+  switch(a.type){
+    case 'swap-own': performSwap(playerId, slotIdx); break;
+    case 'peek-own': performSelfPeek(playerId, slotIdx); break;
+    case 'peek-opp': performOppPeek(playerId, slotIdx); break;
+    case 'blindswap-1':
+      game.pendingAction = { type:'blindswap-2', first:{player:playerId, slot:slotIdx} };
+      render();
+      break;
+    case 'blindswap-2':
+      performBlindSwapHuman(a.first, {player:playerId, slot:slotIdx});
+      break;
+    case 'king-peek':
+      performKingPeekHuman(playerId, slotIdx);
+      break;
+    case 'king-swap-target':
+      performKingSwapHuman(a.peeked, {player:playerId, slot:slotIdx});
+      break;
+  }
+}
+function performSwap(playerId, slotIdx){
+  const p = getPlayer(playerId);
+  const old = p.slots[slotIdx];
+  const incoming = game.pendingCard;
+  if(game.pendingSource==='discard') incoming.publicKnown = true;
+  p.slots[slotIdx] = incoming;
+  markChanged({player:playerId, slot:slotIdx});
+  game.discardPile.push(old);
+  game.pendingCard = null;
+  logMsg(`You swapped a card into your grid.`);
+  tutorialCheckpoint('swapped');
+  endHumanTurnAfterAction();
+}
+function performSelfPeek(playerId, slotIdx){
+  const card = getPlayer(playerId).slots[slotIdx];
+  tutorialCheckpoint('peeked-own');
+  showInfoModal('You peek at your card', `${cardLabel(card)} — worth ${card.value} point${card.value===1?'':'s'}.`, endHumanTurnAfterAction);
+}
+function performOppPeek(playerId, slotIdx){
+  const card = getPlayer(playerId).slots[slotIdx];
+  tutorialCheckpoint('peeked-opp');
+  showInfoModal(`You peek at ${getPlayer(playerId).name}'s card`, `${cardLabel(card)} — worth ${card.value} point${card.value===1?'':'s'}.`, endHumanTurnAfterAction);
+}
+function performBlindSwapHuman(a,b){
+  doBlindSwap(a,b);
+  logMsg(`You blind-swapped two cards on the table.`);
+  tutorialCheckpoint('blind-swapped');
+  endHumanTurnAfterAction();
+}
+function performKingPeekHuman(playerId, slotIdx){
+  const card = getPlayer(playerId).slots[slotIdx];
+  showInfoModalWithChoice(
+    `You peek: ${cardLabel(card)} (${card.value} pt${card.value===1?'':'s'})`,
+    'Swap this card with another one on the table?',
+    ()=>{ game.pendingAction = { type:'king-swap-target', peeked:{player:playerId, slot:slotIdx} }; game.mode='awaiting-target'; render(); },
+    ()=>{ tutorialCheckpoint('king-resolved'); endHumanTurnAfterAction(); }
+  );
+}
+function performKingSwapHuman(peeked, target){
+  doKingSwap({isHuman:true}, peeked, target);
+  logMsg(`You used the King's power to swap two cards.`);
+  tutorialCheckpoint('king-resolved');
+  endHumanTurnAfterAction();
+}
+
+/* ---------- AI logic ---------- */
+// A card taken from the discard pile is face-up for every player, forever —
+// not just the one who holds it. AI decisions should treat that as known
+// even if this particular AI never personally peeked or swapped it in.
+function knownValue(observer, playerId, slotIdx){
+  const card = getPlayer(playerId).slots[slotIdx];
+  if(card.publicKnown) return card.value;
+  if(playerId===observer.id) return observer.memory.own[slotIdx];
+  const mem = observer.memory.opp[playerId];
+  return mem ? mem[slotIdx] : null;
+}
+function computeRemainingAverage(p){
+  const counts = Object.assign({}, game.fullValueCounts);
+  function remove(v){ if(counts[v]>0) counts[v]--; }
+  for(const pl of game.players){
+    for(let i=0;i<4;i++){
+      const c = pl.slots[i];
+      if(c.publicKnown) remove(c.value);
+      else if(pl.id===p.id && p.memory.own[i]!==null) remove(p.memory.own[i]);
+    }
+  }
+  for(const c of game.discardPile) remove(c.value);
+  for(const oid in p.memory.opp){
+    for(const v of p.memory.opp[oid]) if(v!==null) remove(v);
+  }
+  let total=0, count=0;
+  for(let v=0; v<=13; v++){ total += v*counts[v]; count += counts[v]; }
+  return count>0 ? total/count : UNSEEN_AVG;
+}
+function unseenEstimateFor(p){
+  return p.difficulty==='hard' ? computeRemainingAverage(p) : UNSEEN_AVG;
+}
+function caboThreshold(p){
+  if(p.difficulty==='easy') return 2 + Math.random()*13;
+  if(p.difficulty==='hard'){
+    const frac = game.initialDrawPileSize>0 ? (game.drawPile.length/game.initialDrawPileSize) : 0;
+    return 4.5 + 2.5*frac;
+  }
+  return p.riskiness;
+}
+function discardPickupThreshold(p){
+  if(p.difficulty==='easy') return 1;
+  if(p.difficulty==='hard') return 4;
+  return 3;
+}
+function aiEstimateScore(p){
+  const u = unseenEstimateFor(p);
+  let total = 0;
+  for(let i=0;i<4;i++) total += (p.memory.own[i]!==null ? p.memory.own[i] : u);
+  return total;
+}
+function aiWorstKnownSlot(p){
+  let bestIdx=-1, bestVal=-Infinity;
+  for(let i=0;i<4;i++){
+    if(p.memory.own[i]!==null && p.memory.own[i]>bestVal){ bestVal=p.memory.own[i]; bestIdx=i; }
+  }
+  return bestIdx===-1 ? null : { slot:bestIdx, value:bestVal };
+}
+function aiRandomUnknownSlot(p){
+  const unknown = [];
+  for(let i=0;i<4;i++) if(p.memory.own[i]===null) unknown.push(i);
+  if(unknown.length===0) return null;
+  return unknown[Math.floor(Math.random()*unknown.length)];
+}
+function runAiTurn(p){
+  if(p.difficulty==='easy' && Math.random()<0.15){
+    const known = [];
+    for(let i=0;i<4;i++) if(p.memory.own[i]!==null) known.push(i);
+    if(known.length){
+      const idx = known[Math.floor(Math.random()*known.length)];
+      p.memory.own[idx] = null;
+      logMsg(`${p.name} seems to have lost track of one of their cards.`);
+    }
+  }
+  if(game.caboCallerId===null){
+    const est = aiEstimateScore(p);
+    if(est <= caboThreshold(p)){
+      logMsg(`${p.name} calls CABO!`);
+      callCabo(p.id);
+      return;
+    }
+  }
+  const topDiscard = game.discardPile[game.discardPile.length-1];
+  const worst = aiWorstKnownSlot(p);
+  const u = unseenEstimateFor(p);
+  const worstVal = worst ? worst.value : u + 1;
+  const pickupThresh = discardPickupThreshold(p);
+
+  if(topDiscard && topDiscard.value <= pickupThresh && topDiscard.value < worstVal){
+    const slot = worst ? worst.slot : (aiRandomUnknownSlot(p) ?? Math.floor(Math.random()*4));
+    game.discardPile.pop();
+    const old = p.slots[slot];
+    topDiscard.publicKnown = true;
+    p.slots[slot] = topDiscard;
+    markChanged({player:p.id, slot});
+    game.discardPile.push(old);
+    p.memory.own[slot] = topDiscard.value;
+    logMsg(`${p.name} took the top of the discard pile and swapped it in.`);
+    setTimeout(advanceTurn, aiDelay(900));
+    return;
+  }
+
+  if(!ensureDrawPile()) return;
+  const drawn = game.drawPile.pop();
+  logMsg(`${p.name} drew from the deck.`);
+  setTimeout(()=>aiHandleDrawn(p, drawn), aiDelay(700));
+}
+function aiHandleDrawn(p, drawn){
+  const worst = aiWorstKnownSlot(p);
+  const compareVal = worst ? worst.value : unseenEstimateFor(p);
+  if(drawn.value < compareVal - 0.5){
+    const slot = worst ? worst.slot : (aiRandomUnknownSlot(p) ?? Math.floor(Math.random()*4));
+    const old = p.slots[slot];
+    p.slots[slot] = drawn;
+    markChanged({player:p.id, slot});
+    game.discardPile.push(old);
+    p.memory.own[slot] = drawn.value;
+    logMsg(`${p.name} swapped the drawn card into their grid.`);
+    setTimeout(advanceTurn, aiDelay(900));
+    return;
+  }
+  if(hasPower(drawn)){
+    game.discardPile.push(drawn);
+    const pt = powerType(drawn);
+    logMsg(`${p.name} discarded it to use its power.`);
+    setTimeout(()=>aiUsePower(p, pt), aiDelay(800));
+    return;
+  }
+  game.discardPile.push(drawn);
+  logMsg(`${p.name} discarded it.`);
+  setTimeout(advanceTurn, aiDelay(700));
+}
+function aiUsePower(p, pt){
+  if(pt==='peek-own'){
+    const slot = aiRandomUnknownSlot(p);
+    if(slot!==null){ p.memory.own[slot] = p.slots[slot].value; }
+    logMsg(`${p.name} peeked at one of their own cards.`);
+    setTimeout(advanceTurn, aiDelay(700));
+  } else if(pt==='peek-opp'){
+    const others = game.players.filter(pl=>pl.id!==p.id);
+    const target = others[Math.floor(Math.random()*others.length)];
+    const unknownSlots = [];
+    for(let i=0;i<4;i++) if(knownValue(p, target.id, i)===null) unknownSlots.push(i);
+    const slot = unknownSlots.length ? unknownSlots[Math.floor(Math.random()*unknownSlots.length)] : Math.floor(Math.random()*4);
+    p.memory.opp[target.id][slot] = target.slots[slot].value;
+    logMsg(`${p.name} peeked at one of ${target.isHuman ? 'your' : target.name+"'s"} cards.`);
+    setTimeout(advanceTurn, aiDelay(700));
+  } else if(pt==='blind-swap'){
+    const worst = aiWorstKnownSlot(p);
+    if(worst && worst.value>=8){
+      let target=null, tSlot=null;
+      if(p.difficulty==='hard'){
+        outer:
+        for(const other of game.players){
+          if(other.id===p.id) continue;
+          for(let i=0;i<4;i++){
+            const v = knownValue(p, other.id, i);
+            if(v!==null && v<=3){ target=other; tSlot=i; break outer; }
+          }
+        }
+      }
+      if(!target){
+        const others = game.players.filter(pl=>pl.id!==p.id);
+        target = others[Math.floor(Math.random()*others.length)];
+        tSlot = Math.floor(Math.random()*4);
+      }
+      doBlindSwap({player:p.id, slot:worst.slot}, {player:target.id, slot:tSlot});
+      logMsg(`${p.name} blind-swapped one of their cards with ${target.isHuman ? 'yours' : target.name+"'s"}.`);
+    } else {
+      logMsg(`${p.name} chose not to use the swap power.`);
+    }
+    setTimeout(advanceTurn, aiDelay(800));
+  } else if(pt==='king'){
+    const peekSelf = Math.random()<0.5;
+    let targetPlayerId, slot;
+    if(peekSelf || game.players.length===1){
+      targetPlayerId = p.id;
+      slot = aiRandomUnknownSlot(p) ?? Math.floor(Math.random()*4);
+    } else {
+      const others = game.players.filter(pl=>pl.id!==p.id);
+      const target = others[Math.floor(Math.random()*others.length)];
+      targetPlayerId = target.id;
+      const unknownSlots = [];
+      for(let i=0;i<4;i++) if(knownValue(p, target.id, i)===null) unknownSlots.push(i);
+      slot = unknownSlots.length ? unknownSlots[Math.floor(Math.random()*unknownSlots.length)] : Math.floor(Math.random()*4);
+    }
+    const seenValue = getPlayer(targetPlayerId).slots[slot].value;
+    if(targetPlayerId===p.id) p.memory.own[slot] = seenValue;
+    else p.memory.opp[targetPlayerId][slot] = seenValue;
+    logMsg(`${p.name} used the King's power to peek at a card.`);
+
+    const shouldSwap = (targetPlayerId===p.id && seenValue>=8) || (targetPlayerId!==p.id && seenValue<=3 && Math.random()<0.6);
+    if(shouldSwap){
+      let otherPlayerId, otherSlot;
+      if(targetPlayerId===p.id){
+        const others = game.players.filter(pl=>pl.id!==p.id);
+        const target = others[Math.floor(Math.random()*others.length)];
+        otherPlayerId = target.id; otherSlot = Math.floor(Math.random()*4);
+      } else {
+        otherPlayerId = p.id;
+        const w = aiWorstKnownSlot(p);
+        otherSlot = w ? w.slot : (aiRandomUnknownSlot(p) ?? Math.floor(Math.random()*4));
+      }
+      doKingSwap(p, {player:targetPlayerId, slot}, {player:otherPlayerId, slot:otherSlot});
+      logMsg(`${p.name} swapped the card they peeked at with another.`);
+    }
+    setTimeout(advanceTurn, aiDelay(900));
+  } else {
+    setTimeout(advanceTurn, aiDelay(500));
+  }
+}
+
+/* ---------- In-progress game persistence (survives reload / backgrounding) ---------- */
+const GAME_STATE_KEY = 'cabo_game_v1';
+function saveGameState(){
+  // Skip while a modal with callback functions is open (those can't survive
+  // JSON round-tripping) and during the tutorial (its scripted state isn't
+  // meant to be resumed) — the next safe render() will save again.
+  if(!game || game.infoModal || game.tutorialActive) return;
+  try{ localStorage.setItem(GAME_STATE_KEY, JSON.stringify(game)); }catch(e){ /* storage unavailable */ }
+}
+function loadGameState(){
+  try{
+    const raw = localStorage.getItem(GAME_STATE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function clearGameState(){ try{ localStorage.removeItem(GAME_STATE_KEY); }catch(e){ /* storage unavailable */ } }
+function tryResumeGame(){
+  const saved = loadGameState();
+  if(!saved || saved.tutorialActive || saved.mode==='game-over') return false;
+  game = saved;
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'flex';
+  render();
+  return true;
+}
+
+/* ---------- Stats tracking (saved on-device, private to this iPad) ---------- */
+const STATS_KEY = 'cabo_stats_v1';
+function defaultStats(){
+  return {
+    gamesPlayed:0, gamesWon:0, currentStreak:0, bestStreak:0,
+    roundsPlayed:0, roundScoreSum:0, bestRoundScore:null,
+    caboCalls:0, caboClean:0, caboPenalized:0,
+    bestGameScore:null,
+    byDifficulty:{ easy:{played:0,won:0}, normal:{played:0,won:0}, hard:{played:0,won:0} },
+    recentGames:[]
+  };
+}
+function loadStats(){
+  try{
+    const raw = localStorage.getItem(STATS_KEY);
+    if(!raw) return defaultStats();
+    const parsed = JSON.parse(raw);
+    const d = defaultStats();
+    d.byDifficulty = Object.assign(d.byDifficulty, parsed.byDifficulty || {});
+    return Object.assign(d, parsed, { byDifficulty: d.byDifficulty });
+  } catch(e){ return defaultStats(); }
+}
+function saveStats(s){ try{ localStorage.setItem(STATS_KEY, JSON.stringify(s)); } catch(e){ /* storage unavailable */ } }
+function recordRoundStats(humanRoundScore, caboCalledByHuman, humanCleanCall){
+  const s = loadStats();
+  s.roundsPlayed++;
+  s.roundScoreSum += humanRoundScore;
+  if(s.bestRoundScore===null || humanRoundScore < s.bestRoundScore) s.bestRoundScore = humanRoundScore;
+  if(caboCalledByHuman){
+    s.caboCalls++;
+    if(humanCleanCall) s.caboClean++; else s.caboPenalized++;
+  }
+  saveStats(s);
+}
+function recordGameOverStats(){
+  const s = loadStats();
+  s.gamesPlayed++;
+  const sorted = [...game.players].sort((a,b)=>a.totalScore-b.totalScore);
+  const human = getPlayer(HUMAN_ID);
+  const won = sorted[0].id===HUMAN_ID;
+  if(won){ s.gamesWon++; s.currentStreak++; s.bestStreak = Math.max(s.bestStreak, s.currentStreak); }
+  else { s.currentStreak = 0; }
+  if(s.bestGameScore===null || human.totalScore < s.bestGameScore) s.bestGameScore = human.totalScore;
+  const diff = s.byDifficulty[game.difficulty] ? game.difficulty : 'normal';
+  s.byDifficulty[diff].played++;
+  if(won) s.byDifficulty[diff].won++;
+  s.recentGames.unshift({ date:new Date().toISOString(), opponents:game.players.length-1, difficulty:diff, won, score:human.totalScore });
+  if(s.recentGames.length>10) s.recentGames.length = 10;
+  saveStats(s);
+}
+function renderScoreChart(recentGames){
+  if(!recentGames.length) return '';
+  const pts = recentGames.slice().reverse();
+  const scores = pts.map(g=>g.score);
+  const max = Math.max(...scores, 20);
+  const min = Math.min(...scores, 0);
+  const w = 280, h = 90, pad = 12;
+  const range = Math.max(1, max-min);
+  const stepX = pts.length>1 ? (w-2*pad)/(pts.length-1) : 0;
+  const coords = pts.map((g,i)=>{
+    const x = pad + i*stepX;
+    const y = pad + (1 - (g.score-min)/range) * (h-2*pad);
+    return { x, y, won:g.won };
+  });
+  const pointsAttr = coords.map(c=>`${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
+  const dots = coords.map(c=>`<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="4" fill="${c.won?'#3f7a52':'#a6392e'}" />`).join('');
+  return `<div class="stat-chart"><svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}">
+    <polyline points="${pointsAttr}" fill="none" stroke="#C9A24B" stroke-width="2" />
+    ${dots}
+  </svg><div style="font-size:.7rem; opacity:.6; text-align:center;">Your final score, last ${pts.length} game${pts.length===1?'':'s'} (lower is better \u2014 green dot = win)</div></div>`;
+}
+function showStatsPanel(confirmingReset){
+  const s = loadStats();
+  const winRate = s.gamesPlayed ? Math.round(100*s.gamesWon/s.gamesPlayed) : 0;
+  const avgRound = s.roundsPlayed ? (s.roundScoreSum/s.roundsPlayed).toFixed(1) : '\u2014';
+  const caboRate = s.caboCalls ? Math.round(100*s.caboClean/s.caboCalls) : null;
+  const diffRows = ['easy','normal','hard'].map(d=>{
+    const dd = s.byDifficulty[d];
+    const wr = dd.played ? Math.round(100*dd.won/dd.played) : 0;
+    return `<div class="diff-breakdown-row"><span>${d[0].toUpperCase()+d.slice(1)}</span><span>${dd.won}/${dd.played} wins (${wr}%)</span></div>`;
+  }).join('');
+  const recentRows = s.recentGames.length ? s.recentGames.map(g=>{
+    const dateStr = new Date(g.date).toLocaleDateString(undefined,{month:'short', day:'numeric'});
+    return `<div class="result-row"><span>${dateStr} \u00b7 ${g.difficulty}</span><span>${g.opponents} opp</span><span>${g.won?'Won':'Lost'} \u00b7 ${g.score} pts</span></div>`;
+  }).join('') : `<div class="result-row"><span>No games finished yet \u2014 play a full game to start tracking.</span></div>`;
+
+  const html = `<div class="overlay"><div class="modal wide">
+    <h3>Your stats</h3>
+    <div class="stat-grid">
+      <div class="stat-tile"><span class="stat-value">${s.gamesPlayed}</span><span class="stat-label">Games played</span></div>
+      <div class="stat-tile"><span class="stat-value">${winRate}%</span><span class="stat-label">Win rate (${s.gamesWon}/${s.gamesPlayed})</span></div>
+      <div class="stat-tile"><span class="stat-value">${s.currentStreak}</span><span class="stat-label">Current win streak</span></div>
+      <div class="stat-tile"><span class="stat-value">${s.bestStreak}</span><span class="stat-label">Best win streak</span></div>
+      <div class="stat-tile"><span class="stat-value">${avgRound}</span><span class="stat-label">Avg. round score</span></div>
+      <div class="stat-tile"><span class="stat-value">${s.bestRoundScore===null?'\u2014':s.bestRoundScore}</span><span class="stat-label">Best round ever</span></div>
+      <div class="stat-tile"><span class="stat-value">${s.bestGameScore===null?'\u2014':s.bestGameScore}</span><span class="stat-label">Best game total</span></div>
+      <div class="stat-tile"><span class="stat-value">${caboRate===null?'\u2014':caboRate+'%'}</span><span class="stat-label">Clean Cabo calls (${s.caboClean}/${s.caboCalls})</span></div>
+    </div>
+    ${renderScoreChart(s.recentGames)}
+    <div class="stat-section-title">By difficulty</div>
+    ${diffRows}
+    <div class="stat-section-title">Recent games</div>
+    <div class="results-list">${recentRows}</div>
+    ${confirmingReset
+      ? `<div class="modal-actions" style="margin-top:16px;">
+           <button id="reset-stats-confirm" style="background:var(--danger); color:var(--cream);">Yes, reset everything</button>
+           <button id="reset-stats-cancel" class="secondary">Cancel</button>
+         </div>`
+      : `<button class="reset-stats-link" id="reset-stats-btn">Reset all stats</button>`}
+    <div class="modal-actions"><button id="stats-close">Close</button></div>
+  </div></div>`;
+  document.getElementById('modal-root').innerHTML = html;
+  document.getElementById('stats-close').onclick = closeStatsPanel;
+  if(confirmingReset){
+    document.getElementById('reset-stats-confirm').onclick = ()=>{
+      localStorage.removeItem(STATS_KEY);
+      showStatsPanel(false);
+    };
+    document.getElementById('reset-stats-cancel').onclick = ()=> showStatsPanel(false);
+  } else {
+    document.getElementById('reset-stats-btn').onclick = ()=> showStatsPanel(true);
+  }
+}
+function closeStatsPanel(){
+  if(game) render(); else document.getElementById('modal-root').innerHTML = '';
+}
+
+/* ---------- Round / game end ---------- */
+function endRound(){
+  game.mode = 'round-end';
+  for(const p of game.players){
+    let sum = 0;
+    for(const c of p.slots) sum += c.value;
+    p.roundScore = sum;
+  }
+  let caboCalledByHuman = false, humanCleanCall = false;
+  if(game.caboCallerId!==null){
+    const caller = getPlayer(game.caboCallerId);
+    const minScore = Math.min(...game.players.map(pl=>pl.roundScore));
+    const wasLowest = caller.roundScore <= minScore;
+    if(caller.id===HUMAN_ID){ caboCalledByHuman = true; humanCleanCall = wasLowest; }
+    if(!wasLowest){
+      caller.roundScore += 10;
+      logMsg(`${caller.name} didn't have the lowest score — +10 penalty!`);
+      if(caller.id===HUMAN_ID) hapticPulse([30,60,30,60,30]);
+    }
+  }
+  for(const p of game.players) p.totalScore += p.roundScore;
+  if(!game.tutorialActive){
+    recordRoundStats(getPlayer(HUMAN_ID).roundScore, caboCalledByHuman, humanCleanCall);
+  }
+  logMsg('Round over. Cards revealed.');
+  render();
+}
+function nextRound(){
+  const maxTotal = Math.max(...game.players.map(p=>p.totalScore));
+  if(maxTotal>=100){
+    game.mode='game-over';
+    if(!game.tutorialActive) recordGameOverStats();
+    render();
+    return;
+  }
+  game.round++;
+  startRound();
+}
+
+/* ---------- Info modal helpers ---------- */
+function showInfoModal(title, body, onClose){ game.infoModal = { title, body, onClose }; render(); }
+function showInfoModalWithChoice(title, body, onYes, onNo){ game.infoModal = { title, body, onYes, onNo }; render(); }
+
+/* ---------- Rendering ---------- */
+function renderCardFace(card){
+  return `<div class="card-face suit-${isRed(card.suit)?'red':'black'}">
+    <span class="card-rank">${card.rank}</span>
+    <span class="card-suit">${SUIT_SYMBOL[card.suit]}</span>
+    <span class="card-rank card-rank-br">${card.rank}</span>
+  </div>`;
+}
+function tutorialHighlighted(matchFn){
+  if(!game.tutorialActive || !game.tutorialHighlight) return false;
+  return matchFn(game.tutorialHighlight);
+}
+let animatedSlots = [];
+function renderSlot(playerId, slotIdx, card){
+  const faceUp = card.publicKnown;
+  const selectable = game.mode==='awaiting-target' && isSelectable(playerId, slotIdx);
+  const glow = tutorialHighlighted(h => (h.type==='slot' && h.player===playerId && h.slot===slotIdx) || (h.type==='seat' && h.player===playerId));
+  const changed = animatedSlots.some(c=>c.player===playerId && c.slot===slotIdx);
+  return `<button class="slot ${selectable?'selectable':''} ${glow?'tutorial-glow':''} ${changed?'card-changed':''}" data-player="${playerId}" data-slot="${slotIdx}" ${selectable?'':'disabled'}>
+    ${faceUp ? renderCardFace(card) : '<div class="card-back"></div>'}
+  </button>`;
+}
+function renderGrid(player){
+  let html = '<div class="grid">';
+  for(let i=0;i<4;i++) html += renderSlot(player.id, i, player.slots[i]);
+  html += '</div>';
+  return html;
+}
+function targetHintText(){
+  const a = game.pendingAction;
+  if(!a) return '';
+  switch(a.type){
+    case 'swap-own': return 'Tap one of your own cards to swap it in.';
+    case 'peek-own': return 'Tap one of your own cards to peek at it.';
+    case 'peek-opp': return "Tap one of an opponent's cards to peek at it.";
+    case 'blindswap-1': return 'Tap the first card to swap (yours or an opponent\u2019s).';
+    case 'blindswap-2': return 'Now tap the second card to swap with.';
+    case 'king-peek': return 'Tap any card on the table to peek at it.';
+    case 'king-swap-target': return 'Tap a card to swap with the one you peeked at.';
+    default: return '';
+  }
+}
+function render(){
+  if(!game) return;
+  animatedSlots = game.lastChanged || [];
+  game.lastChanged = [];
+  const app = document.getElementById('app');
+  const opponents = game.players.filter(p=>!p.isHuman);
+  const human = getPlayer(HUMAN_ID);
+  const inTurn = game.mode!=='round-end' && game.mode!=='game-over' && game.mode!=='peek';
+
+  let html = '';
+  html += `<div class="scoreboard">${game.tutorialActive?'':`<div class="info-chip">${game.difficulty[0].toUpperCase()+game.difficulty.slice(1)}</div>`}${game.players.map(p=>`
+    <div class="score-chip ${inTurn && currentPlayerId()===p.id ? 'active':''}">
+      <span class="score-name">${p.name}</span><span class="score-num">${p.totalScore}</span>
+    </div>`).join('')}</div>`;
+
+  html += `<div class="opponents-row">${opponents.map(p=>`
+    <div class="seat">
+      <div class="seat-label">${p.name}${game.caboCallerId===p.id?' <span class="cabo-tag">CABO</span>':''}</div>
+      ${renderGrid(p)}
+    </div>`).join('')}</div>`;
+
+  const canAct = game.mode==='human-turn';
+  const tutStep = game.tutorialActive ? TUTORIAL_STEPS[game.tutorialStep] : null;
+  const tutRestrict = tutStep && tutStep.restrict ? tutStep.restrict : null;
+  const drawGlow = tutorialHighlighted(h=>h.type==='pile' && h.which==='draw');
+  const discardGlow = tutorialHighlighted(h=>h.type==='pile' && h.which==='discard');
+  const caboGlow = tutorialHighlighted(h=>h.type==='cabo-button');
+  const drawDisabled = !canAct || (tutRestrict && tutRestrict.turnAction && tutRestrict.turnAction!=='deck');
+  const discardDisabled = !canAct || game.discardPile.length===0 || (tutRestrict && tutRestrict.turnAction && tutRestrict.turnAction!=='discard');
+  const caboDisabled = !canAct || game.caboCallerId!==null || (tutRestrict && tutRestrict.turnAction && tutRestrict.turnAction!=='cabo');
+  html += `<div class="center-row">
+    <div class="pile-wrap">
+      <button id="draw-pile" class="pile ${drawGlow?'tutorial-glow':''}" ${drawDisabled?'disabled':''}>
+        <div class="card-back"></div><span class="pile-count">${game.drawPile.length}</span>
+      </button>
+      <div class="pile-caption">Draw</div>
+    </div>
+    <div class="pile-wrap">
+      <button id="discard-pile" class="pile ${discardGlow?'tutorial-glow':''}" ${discardDisabled?'disabled':''}>
+        ${game.discardPile.length ? renderCardFace(game.discardPile[game.discardPile.length-1]) : '<div class="card-back empty"></div>'}
+      </button>
+      <div class="pile-caption">Discard</div>
+    </div>
+  </div>`;
+
+  html += `<div class="seat player-seat">
+    <div class="seat-label">You${game.caboCallerId===HUMAN_ID?' <span class="cabo-tag">CABO</span>':''}</div>
+    ${renderGrid(human)}
+  </div>`;
+
+  html += `<div class="action-bar">
+    <button id="btn-cabo" class="${caboGlow?'tutorial-glow':''}" ${caboDisabled?'disabled':''}>Call CABO</button>
+    <button id="btn-log">Log</button>
+    <button id="btn-rules">Rules</button>
+    ${game.tutorialActive ? '' : `<button id="btn-fast" class="${fastForward?'on':''}" title="Speed through AI turn pacing">${fastForward?'Fast ✓':'Fast'}</button>`}
+  </div>`;
+
+  app.innerHTML = html;
+  attachHandlers();
+  renderModals();
+  saveGameState();
+}
+function attachHandlers(){
+  document.querySelectorAll('.slot').forEach(btn=>{
+    btn.addEventListener('click', ()=> onSlotClick(parseInt(btn.dataset.player), parseInt(btn.dataset.slot)));
+  });
+  const dp = document.getElementById('draw-pile'); if(dp) dp.addEventListener('click', humanDrawDeck);
+  const disc = document.getElementById('discard-pile'); if(disc) disc.addEventListener('click', humanDrawDiscard);
+  const cabo = document.getElementById('btn-cabo'); if(cabo) cabo.addEventListener('click', ()=>callCabo(HUMAN_ID));
+  const logBtn = document.getElementById('btn-log'); if(logBtn) logBtn.addEventListener('click', ()=>{ game.showLog=true; render(); });
+  const rulesBtn = document.getElementById('btn-rules'); if(rulesBtn) rulesBtn.addEventListener('click', ()=>{
+    showInfoModal('How to play', rulesBody(), ()=>{});
+  });
+  const fastBtn = document.getElementById('btn-fast'); if(fastBtn) fastBtn.addEventListener('click', ()=>{
+    fastForward = !fastForward;
+    render();
+  });
+}
+function rulesBody(){
+  return `Values: A=1, 2\u201310 face value, J=11, Q=12, K=13 (King of diamonds=0).<br><br>
+  On your turn: draw from the deck or the discard pile.<br>
+  \u2022 From the deck: swap it into your grid, or discard it face-up to use its power.<br>
+  \u2022 From the discard pile: it's already known, so you must swap it into your grid (it stays face-up forever).<br><br>
+  Powers when discarding a drawn card: 7/8 peek your own card &middot; 9/10 peek an opponent's card &middot; J/Q blind-swap any two cards &middot; K (not diamonds) peek any card, then optionally swap it.<br><br>
+  Call CABO instead of drawing when you think you're low. Everyone else gets one last turn, then all cards flip. Lowest total wins the round \u2014 unless you called Cabo and didn't actually have the lowest, which costs you a 10-point penalty. First to 100 total points loses; lowest total overall wins the game.`;
+}
+function renderModals(){
+  const root = document.getElementById('modal-root');
+  let html = '';
+  if(game.infoModal){
+    const m = game.infoModal;
+    html += `<div class="overlay"><div class="modal">
+      <h3>${m.title}</h3><p>${m.body}</p>
+      <div class="modal-actions">
+      ${m.onYes ? `<button id="modal-yes">Swap it</button><button id="modal-no" class="secondary">Leave it</button>`
+                : `<button id="modal-close">Got it</button>`}
+      </div></div></div>`;
+  } else if(game.mode==='peek'){
+    const human = getPlayer(HUMAN_ID);
+    html += `<div class="overlay"><div class="modal">
+      <h3>Memorize your cards</h3>
+      <p>Take a look at your bottom two cards. You won't get another free peek this round.</p>
+      <div class="peek-cards">${renderCardFace(human.slots[2])}${renderCardFace(human.slots[3])}</div>
+      <div class="modal-actions"><button id="peek-confirm">Got it \u2014 flip them down</button></div>
+    </div></div>`;
+  } else if(game.mode==='human-drawn'){
+    const c = game.pendingCard;
+    const tutStep = game.tutorialActive ? TUTORIAL_STEPS[game.tutorialStep] : null;
+    const r = (tutStep && tutStep.restrict) ? tutStep.restrict.drawnAction : null;
+    const swapDisabled = r && r!=='swap';
+    const powerDisabled = r && r!=='power';
+    const plainDisabled = r && r!=='plain';
+    html += `<div class="overlay"><div class="modal">
+      <h3>You drew ${cardLabel(c)}</h3>
+      <p>Worth ${c.value} point${c.value===1?'':'s'}.${hasPower(c)?' It has a power if you discard it.':''}</p>
+      <div class="modal-actions">
+        <button id="drawn-swap" ${swapDisabled?'disabled':''}>Swap into your grid</button>
+        ${hasPower(c)?`<button id="drawn-power" ${powerDisabled?'disabled':''}>Discard &amp; use power</button>`:''}
+        <button id="drawn-discard" class="secondary" ${plainDisabled?'disabled':''}>Just discard</button>
+      </div>
+    </div></div>`;
+  } else if(game.mode==='round-end'){
+    html += `<div class="overlay"><div class="modal wide">
+      <h3>Round ${game.round} results</h3>
+      <div class="results-list">
+      ${game.players.map(p=>`<div class="result-row"><span>${p.name}</span><span class="hand">${p.slots.map(c=>cardLabel(c)).join(' ')}</span><span>${p.roundScore} pts (total ${p.totalScore})</span></div>`).join('')}
+      </div>
+      ${game.tutorialActive
+        ? `<p style="margin-top:14px;">That's the whole game! Head back to the menu whenever you're ready to play for real.</p><div class="modal-actions"><button id="tutorial-done">Finish tutorial</button></div>`
+        : `<div class="modal-actions"><button id="next-round">Continue</button></div>`}
+    </div></div>`;
+  } else if(game.mode==='game-over'){
+    const sorted = [...game.players].sort((a,b)=>a.totalScore-b.totalScore);
+    html += `<div class="overlay"><div class="modal wide">
+      <h3>${sorted[0].id===HUMAN_ID ? 'You win!' : sorted[0].name+' wins.'}</h3>
+      <div class="results-list">
+      ${sorted.map((p,i)=>`<div class="result-row"><span>${i+1}. ${p.name}</span><span>${p.totalScore} pts</span></div>`).join('')}
+      </div>
+      <div class="modal-actions"><button id="play-again">Play again</button></div>
+    </div></div>`;
+  } else if(game.mode==='awaiting-target'){
+    if(!game.tutorialActive) html += `<div class="hint-banner">${targetHintText()}</div>`;
+  } else if(game.mode==='ai-turn'){
+    html += `<div class="hint-banner">${getPlayer(currentPlayerId()).name} is thinking\u2026</div>`;
+  }
+  if(game.showLog){
+    html += `<div class="overlay"><div class="modal wide">
+      <h3>Game log</h3>
+      <div class="log-list">${game.log.slice().reverse().map(l=>`<div class="log-row">${l}</div>`).join('')}</div>
+      <div class="modal-actions"><button id="log-close">Close</button></div>
+    </div></div>`;
+  }
+  html += renderTutorialBar();
+  root.innerHTML = html;
+  wireModalHandlers();
+}
+function renderTutorialBar(){
+  if(!game.tutorialActive) return '';
+  if(game.mode==='peek' || game.mode==='round-end' || game.mode==='game-over') return '';
+  const step = TUTORIAL_STEPS[game.tutorialStep];
+  if(!step) return '';
+  return `<div class="tutorial-bar">
+    <div class="tutorial-top">
+      <span class="tutorial-count">Step ${game.tutorialStep+1} of ${TUTORIAL_STEPS.length}</span>
+      <button id="tutorial-skip" class="tutorial-skip">Skip tutorial</button>
+    </div>
+    <div class="tutorial-text">${step.msg}</div>
+    ${step.type==='info' ? `<button id="tutorial-next" class="tutorial-next-btn">Next</button>` : `<div class="tutorial-waiting">\u2192 go ahead, try it on the board above</div>`}
+  </div>`;
+}
+function wireModalHandlers(){
+  const tutNext = document.getElementById('tutorial-next'); if(tutNext) tutNext.onclick = tutorialNext;
+  const tutSkip = document.getElementById('tutorial-skip'); if(tutSkip) tutSkip.onclick = tutorialSkip;
+  const tutDone = document.getElementById('tutorial-done'); if(tutDone) tutDone.onclick = tutorialFinish;
+  const m = game.infoModal;
+  if(m){
+    if(m.onYes){
+      document.getElementById('modal-yes').onclick = ()=>{ const f=m.onYes; game.infoModal=null; f(); };
+      document.getElementById('modal-no').onclick = ()=>{ const f=m.onNo; game.infoModal=null; f(); };
+    } else {
+      document.getElementById('modal-close').onclick = ()=>{ const f=m.onClose; game.infoModal=null; f(); };
+    }
+    return;
+  }
+  const peekBtn = document.getElementById('peek-confirm'); if(peekBtn) peekBtn.onclick = beginTurn;
+  const drawnSwap = document.getElementById('drawn-swap'); if(drawnSwap) drawnSwap.onclick = ()=>{ game.pendingAction={type:'swap-own'}; game.mode='awaiting-target'; render(); };
+  const drawnPower = document.getElementById('drawn-power'); if(drawnPower) drawnPower.onclick = discardPendingForPower;
+  const drawnDiscard = document.getElementById('drawn-discard'); if(drawnDiscard) drawnDiscard.onclick = discardPendingNoEffect;
+  const nextRoundBtn = document.getElementById('next-round'); if(nextRoundBtn) nextRoundBtn.onclick = nextRound;
+  const playAgainBtn = document.getElementById('play-again'); if(playAgainBtn) playAgainBtn.onclick = showStartScreen;
+  const logClose = document.getElementById('log-close'); if(logClose) logClose.onclick = ()=>{ game.showLog=false; render(); };
+}
+
+/* ---------- Start screen ---------- */
+function showStartScreen(){
+  game = null;
+  clearGameState();
+  document.getElementById('start-screen').style.display = 'flex';
+  document.getElementById('game-screen').style.display = 'none';
+}
+const DIFFICULTY_BLURBS = {
+  easy: 'Forgets cards it has peeked at, and calls CABO on a hunch \u2014 sometimes way too early, sometimes way too late.',
+  normal: 'Solid, straightforward play \u2014 a fair fight.',
+  hard: 'Near-perfect memory, calculates the exact odds of every unseen card, and targets your weak spots with blind swaps.'
+};
+function wireStartScreen(){
+  let chosen = 2;
+  let chosenDifficulty = 'normal';
+  document.querySelectorAll('.ai-count-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.ai-count-btn').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      chosen = parseInt(btn.dataset.count);
+    });
+  });
+  document.querySelectorAll('.diff-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      chosenDifficulty = btn.dataset.diff;
+      document.getElementById('difficulty-blurb').textContent = DIFFICULTY_BLURBS[chosenDifficulty];
+    });
+  });
+  document.getElementById('rules-panel').innerHTML = `
+    <h4>Setup</h4><p>Each player gets 4 face-down cards. You peek at your bottom two once at the start of each round.</p>
+    <h4>Values</h4><p>A=1, 2\u201310 face value, J=11, Q=12, K=13 (King of diamonds is a lucky 0).</p>
+    <h4>Your turn</h4><p>Draw from the deck (swap it in, or discard it to use its power) or take the discard pile's top card (must swap it in \u2014 it's already known, and stays face-up forever).</p>
+    <h4>Powers</h4><p>7/8 peek your own card &middot; 9/10 peek an opponent's &middot; J/Q blind-swap any two cards &middot; K (not diamonds) peek any card, then optionally swap it.</p>
+    <h4>Ending a round</h4><p>Call CABO when you think you're lowest. Everyone else gets one last turn, then hands are revealed. If you called and weren't actually lowest, you take a 10-point penalty.</p>
+    <h4>Winning</h4><p>Play rounds until someone reaches 100 points. Lowest total wins.</p>
+    <h4>Difficulty</h4><p><b>Easy</b> \u2014 ${DIFFICULTY_BLURBS.easy}</p><p><b>Normal</b> \u2014 ${DIFFICULTY_BLURBS.normal}</p><p><b>Hard</b> \u2014 ${DIFFICULTY_BLURBS.hard}</p>
+    <p style="opacity:.7; font-size:.85rem; margin-top:10px;">Note: this version skips the real-time "quick discard" house rule, since it needs live opponents.</p>
+  `;
+  document.getElementById('start-btn').addEventListener('click', ()=>{
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('game-screen').style.display = 'flex';
+    newGame(chosen, chosenDifficulty);
+  });
+  document.getElementById('tutorial-btn').addEventListener('click', ()=>{
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('game-screen').style.display = 'flex';
+    startTutorial();
+  });
+  document.getElementById('start-rules-btn').addEventListener('click', ()=>{
+    document.getElementById('rules-panel').classList.toggle('open');
+  });
+  document.getElementById('stats-btn').addEventListener('click', ()=>showStatsPanel(false));
+}
+function init(){
+  wireStartScreen();
+  tryResumeGame();
+}
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
