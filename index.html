@@ -1332,6 +1332,29 @@ function renderModals(){
   html += renderTutorialBar();
   root.innerHTML = html;
   wireModalHandlers();
+  reserveTutorialBarSpace();
+}
+// The tutorial bar is a fixed-position overlay (rendered into #modal-root, a
+// sibling of #game-screen) so it doesn't naturally push board content out of
+// its way. Without this, its height varies with the step's text length (1 vs.
+// 2 wrapped lines) and can end up covering — and blocking taps on — the
+// action bar underneath it, including the Call CABO button.
+function reserveTutorialBarSpace(){
+  const gameScreen = document.getElementById('game-screen');
+  const bar = document.querySelector('.tutorial-bar');
+  gameScreen.style.paddingBottom = bar ? `calc(env(safe-area-inset-bottom) + 10px + ${bar.offsetHeight}px)` : '';
+  if(!bar) return;
+  // Belt-and-suspenders: on a viewport short enough that the padding above
+  // still isn't enough room, make sure whatever this step is pointing at is
+  // actually scrolled into view.
+  const h = game.tutorialActive ? game.tutorialHighlight : null;
+  if(!h) return;
+  let target = null;
+  if(h.type==='cabo-button') target = document.getElementById('btn-cabo');
+  else if(h.type==='pile') target = document.getElementById(h.which==='draw' ? 'draw-pile' : 'discard-pile');
+  else if(h.type==='slot') target = document.querySelector(`.slot[data-player="${h.player}"][data-slot="${h.slot}"]`);
+  else if(h.type==='seat') target = document.querySelector(`.slot[data-player="${h.player}"]`);
+  if(target) target.scrollIntoView({ block:'nearest' });
 }
 function renderTutorialBar(){
   if(!game.tutorialActive) return '';
