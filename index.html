@@ -387,7 +387,7 @@ const TUTORIAL_STEPS = [
   { type:'info', msg:"Neither of you knows what just happened in Coach's grid. That's the fun of a blind swap \u2014 use it to bury a bad card you know about, or just to scramble an opponent's memory." },
   { type:'action', restrict:{turnAction:'deck'}, highlight:{type:'pile', which:'draw'}, msg:"Last power card, promise. Tap the draw pile.", advanceOn:'drew-deck' },
   { type:'action', restrict:{drawnAction:'power'}, msg:"A King! Discard it to use its power.", advanceOn:'used-power:king' },
-  { type:'action', highlight:{type:'seat', player:1}, msg:"Kings let you peek at ANY card, then choose whether to swap it with another. Tap one of Coach's cards to peek \u2014 then try tapping 'Leave it' when asked.", advanceOn:'king-resolved' },
+  { type:'action', highlight:{type:'seat', player:1}, msg:"Kings let you peek at ANY card, then choose whether to swap it with another. Tap one of Coach's cards to peek \u2014 then try tapping 'Leave it' when asked. (Tap 'Swap it' instead and you'll just need one more tap \u2014 any other card \u2014 to finish the swap.)", advanceOn:'king-resolved' },
   { type:'info', msg:"You've now used every power in the game. Let's see if you're ready to end the round." },
   { type:'action', restrict:{turnAction:'cabo'}, highlight:{type:'cabo-button'}, msg:"You know three of your four cards, and together they only add up to a handful of points. When you're confident you're low, tap 'Call CABO' instead of drawing.", advanceOn:'called-cabo' },
   { type:'info', msg:"Calling Cabo means everyone else gets exactly one more turn, then every hand flips face-up. If you weren't actually the lowest, you'd take a 10-point penalty \u2014 so only call when you're fairly sure. Let's see how you did!" }
@@ -1151,7 +1151,16 @@ let animatedSlots = [];
 function renderSlot(playerId, slotIdx, card){
   const faceUp = card.publicKnown;
   const selectable = game.mode==='awaiting-target' && isSelectable(playerId, slotIdx);
-  const glow = tutorialHighlighted(h => (h.type==='slot' && h.player===playerId && h.slot===slotIdx) || (h.type==='seat' && h.player===playerId));
+  // Mid-action follow-up tap (King's swap target, or the second half of a
+  // blind swap): the tutorial's per-step highlight is static and would keep
+  // glowing every card in the seat, including the one just picked that's now
+  // excluded — making it look tappable when it silently does nothing. Once
+  // we're in one of these two-tap phases, glow exactly what's still
+  // selectable instead of the static step highlight.
+  const followUpTypes = ['king-swap-target','blindswap-2'];
+  const glow = (game.tutorialActive && game.pendingAction && followUpTypes.includes(game.pendingAction.type))
+    ? selectable
+    : tutorialHighlighted(h => (h.type==='slot' && h.player===playerId && h.slot===slotIdx) || (h.type==='seat' && h.player===playerId));
   const changed = animatedSlots.some(c=>c.player===playerId && c.slot===slotIdx);
   return `<button class="slot ${selectable?'selectable':''} ${glow?'tutorial-glow':''} ${changed?'card-changed':''}" data-player="${playerId}" data-slot="${slotIdx}" ${selectable?'':'disabled'}>
     ${faceUp ? renderCardFace(card) : '<div class="card-back"></div>'}
@@ -1318,7 +1327,13 @@ function renderModals(){
       <div class="modal-actions"><button id="play-again">Play again</button></div>
     </div></div>`;
   } else if(game.mode==='awaiting-target'){
-    if(!game.tutorialActive) html += `<div class="hint-banner">${targetHintText()}</div>`;
+    // The tutorial's per-step text is written for the *first* tap of an
+    // action. King's swap-target and the second half of a blind swap need a
+    // follow-up tap the script doesn't narrate, so surface the normal live
+    // hint banner for those even during the tutorial.
+    const followUpTypes = ['king-swap-target','blindswap-2'];
+    const isFollowUp = game.pendingAction && followUpTypes.includes(game.pendingAction.type);
+    if(!game.tutorialActive || isFollowUp) html += `<div class="hint-banner">${targetHintText()}</div>`;
   } else if(game.mode==='ai-turn'){
     html += `<div class="hint-banner">${getPlayer(currentPlayerId()).name} is thinking\u2026</div>`;
   }
