@@ -1414,6 +1414,10 @@ function showStartScreen(){
   clearGameState();
   document.getElementById('start-screen').style.display = 'flex';
   document.getElementById('game-screen').style.display = 'none';
+  // #modal-root lives outside #game-screen, so hiding the game screen alone
+  // leaves any open modal (round-end, game-over, stats, etc.) stuck on top
+  // of the start screen forever — clear it explicitly.
+  document.getElementById('modal-root').innerHTML = '';
 }
 const DIFFICULTY_BLURBS = {
   easy: 'Forgets cards it has peeked at, and calls CABO on a hunch \u2014 sometimes way too early, sometimes way too late.',
