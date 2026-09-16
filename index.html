@@ -204,6 +204,17 @@
     display:flex; align-items:center; justify-content:center; padding:0;
   }
 
+  .toast-banner{
+    position:fixed; left:50%; transform:translateX(-50%);
+    bottom:calc(env(safe-area-inset-bottom) + 78px);
+    background:var(--ink); color:var(--cream); padding:10px 18px; border-radius:12px;
+    font-size:.85rem; font-weight:600; box-shadow:0 8px 20px rgba(0,0,0,.4); z-index:25; text-align:center;
+    max-width:88vw; border:1.5px solid var(--gold-bright);
+    animation: toast-in .2s ease-out;
+  }
+  @keyframes toast-in{ 0%{ opacity:0; transform:translateX(-50%) translateY(8px); } 100%{ opacity:1; transform:translateX(-50%) translateY(0); } }
+  @media (prefers-reduced-motion: reduce){ .toast-banner{ animation:none; } }
+
   .overlay{
     position:fixed; inset:0; background:rgba(8,16,12,0.62); display:flex; align-items:center; justify-content:center;
     padding:20px; z-index:50;
@@ -295,6 +306,22 @@ let fastForward = false;
 // Scales down the deliberately-paced AI "thinking" delays when Fast mode is on.
 function aiDelay(ms){ return fastForward ? Math.max(60, Math.round(ms/5)) : ms; }
 
+// Non-blocking banner for AI actions that touch the human's own cards (a
+// swap or a peek) — kept out of `game` (not persisted) since it's a
+// transient cue, not game state, and a reload shouldn't resurrect a stale one.
+let activeToast = null;
+let toastTimer = null;
+let toastCounter = 0;
+function showToast(msg){
+  activeToast = { id: ++toastCounter, msg };
+  if(toastTimer) clearTimeout(toastTimer);
+  const id = activeToast.id;
+  toastTimer = setTimeout(()=>{
+    if(activeToast && activeToast.id===id){ activeToast = null; render(); }
+  }, fastForward ? 1400 : 3200);
+  render();
+}
+
 /* ---------- Card helpers ---------- */
 function rankValue(rank, suit){
   if(rank==='JOKER') return -1;
@@ -367,6 +394,8 @@ function newGame(numAI, difficulty){
 }
 
 function startRound(){
+  if(toastTimer){ clearTimeout(toastTimer); toastTimer=null; }
+  activeToast = null;
   const deck = shuffle(buildDeck());
   for(const p of game.players){
     p.slots = [deck.pop(), deck.pop(), deck.pop(), deck.pop()];
@@ -942,6 +971,7 @@ function aiUsePower(p, pt){
                : liveSlots[Math.floor(Math.random()*liveSlots.length)];
     p.memory.opp[target.id][slot] = target.slots[slot].value;
     logMsg(`${p.name} peeked at one of ${target.isHuman ? 'your' : target.name+"'s"} cards.`);
+    if(target.isHuman) showToast(`${p.name} peeked at one of your cards.`);
     setTimeout(endAiTurnAfterAction, aiDelay(700));
   } else if(pt==='blind-swap'){
     const worst = aiWorstKnownSlot(p);
@@ -968,6 +998,7 @@ function aiUsePower(p, pt){
       if(target && tSlot!==-1){
         doBlindSwap({player:p.id, slot:worst.slot}, {player:target.id, slot:tSlot});
         logMsg(`${p.name} blind-swapped one of their cards with ${target.isHuman ? 'yours' : target.name+"'s"}.`);
+        if(target.isHuman) showToast(`${p.name} blind-swapped one of their cards with one of yours.`);
       } else {
         logMsg(`${p.name} had no one to swap with.`);
       }
@@ -995,6 +1026,7 @@ function aiUsePower(p, pt){
     if(!p.memory.opp[target.id]) p.memory.opp[target.id] = target.slots.map(()=>null);
     p.memory.opp[target.id][slot] = seenValue;
     logMsg(`${p.name} used the Queen's power to peek at ${target.isHuman?'your':target.name+"'s"} card.`);
+    if(target.isHuman) showToast(`${p.name} used the Queen's power to peek at one of your cards.`);
 
     const worst = aiWorstKnownSlot(p);
     const worstVal = worst ? worst.value : unseenEstimateFor(p);
@@ -1003,6 +1035,7 @@ function aiUsePower(p, pt){
     if(shouldSwap && ownSlot!==-1){
       doPeekedSwap(p, {player:target.id, slot}, {player:p.id, slot:ownSlot});
       logMsg(`${p.name} swapped it in for one of their own.`);
+      if(target.isHuman) showToast(`${p.name} swapped one of your cards into their own grid.`);
     } else {
       logMsg(`${p.name} chose not to swap.`);
     }
@@ -1336,6 +1369,8 @@ function render(){
     <button id="btn-rules">Rules</button>
     <button id="btn-fast" class="${fastForward?'on':''}" title="Speed through AI turn pacing">${fastForward?'Fast ✓':'Fast'}</button>
   </div>`;
+
+  if(activeToast) html += `<div class="toast-banner">${activeToast.msg}</div>`;
 
   app.innerHTML = html;
   attachHandlers();
