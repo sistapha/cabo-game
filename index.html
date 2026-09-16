@@ -112,12 +112,16 @@
   .scoreboard{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
   .score-chip{
     background:rgba(10,26,19,0.5); border:1px solid rgba(234,200,115,0.25);
-    border-radius:999px; padding:6px 14px; display:flex; gap:8px; align-items:baseline;
-    font-size:.85rem;
+    border-radius:14px; padding:6px 12px; display:flex; flex-direction:column; gap:5px;
+    font-size:.85rem; min-width:82px;
   }
   .score-chip.active{ border-color:var(--gold-bright); box-shadow:0 0 0 2px rgba(234,200,115,0.25); }
+  .score-chip-top{ display:flex; gap:8px; align-items:baseline; justify-content:space-between; }
   .score-name{ color:var(--cream); font-weight:600; }
   .score-num{ color:var(--gold-bright); font-weight:700; }
+  .score-progress-track{ width:100%; height:5px; border-radius:999px; background:rgba(255,255,255,0.14); overflow:hidden; }
+  .score-progress-fill{ height:100%; background:var(--gold-bright); border-radius:999px; }
+  .score-progress-fill.danger{ background:var(--danger); }
 
   .opponents-row{ display:flex; flex-wrap:wrap; gap:22px; justify-content:center; padding:6px 0; }
   .seat{ display:flex; flex-direction:column; align-items:center; gap:6px; }
@@ -211,6 +215,7 @@
   .modal.wide{ max-width:540px; }
   .modal h3{ font-size:1.35rem; margin-bottom:8px; }
   .modal p{ line-height:1.5; margin:6px 0; color:#3a3a30; }
+  .winner-line{ font-weight:700; color:#8a6a1f; }
   .peek-cards{ display:flex; gap:14px; justify-content:center; margin:18px 0; }
   .peek-cards .card-face{ width:88px; height:126px; }
   .modal-actions{ display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
@@ -1286,10 +1291,14 @@ function render(){
   const inTurn = game.mode!=='round-end' && game.mode!=='game-over' && game.mode!=='peek';
 
   let html = '';
-  html += `<div class="scoreboard"><div class="info-chip">${game.difficulty[0].toUpperCase()+game.difficulty.slice(1)}</div>${game.players.map(p=>`
+  html += `<div class="scoreboard"><div class="info-chip">${game.difficulty[0].toUpperCase()+game.difficulty.slice(1)}</div>${game.players.map(p=>{
+    const pct = Math.max(0, Math.min(100, p.totalScore));
+    return `
     <div class="score-chip ${inTurn && currentPlayerId()===p.id ? 'active':''}">
-      <span class="score-name">${p.name}</span><span class="score-num">${p.totalScore}</span>
-    </div>`).join('')}</div>`;
+      <div class="score-chip-top"><span class="score-name">${p.name}</span><span class="score-num">${p.totalScore}</span></div>
+      <div class="score-progress-track"><div class="score-progress-fill ${pct>=80?'danger':''}" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('')}</div>`;
 
   html += `<div class="opponents-row">${opponents.map(p=>`
     <div class="seat">
@@ -1390,8 +1399,14 @@ function renderModals(){
       </div>
     </div></div>`;
   } else if(game.mode==='round-end'){
+    const minRoundScore = Math.min(...game.players.map(pl=>pl.roundScore));
+    const roundWinners = game.players.filter(pl=>pl.roundScore===minRoundScore);
+    const roundWinnerText = roundWinners.length>1
+      ? `It's a tie this round between ${roundWinners.map(w=>w.id===HUMAN_ID?'You':w.name).join(' &amp; ')} (${minRoundScore} pts).`
+      : `${roundWinners[0].id===HUMAN_ID ? 'You' : roundWinners[0].name} won this round with ${minRoundScore} pts.`;
     html += `<div class="overlay"><div class="modal wide">
       <h3>Round ${game.round} results</h3>
+      <p class="winner-line">${roundWinnerText}</p>
       <div class="results-list">
       ${game.players.map(p=>`<div class="result-row"><span>${p.name}</span><span class="hand">${p.slots.map(c=>cardLabel(c)).join(' ')}</span><span>${p.roundScore} pts (total ${p.totalScore})</span></div>`).join('')}
       </div>
@@ -1399,8 +1414,13 @@ function renderModals(){
     </div></div>`;
   } else if(game.mode==='game-over'){
     const sorted = [...game.players].sort((a,b)=>a.totalScore-b.totalScore);
+    const minTotal = sorted[0].totalScore;
+    const winners = sorted.filter(p=>p.totalScore===minTotal);
+    const headline = winners.length>1
+      ? `It's a tie! ${winners.map(w=>w.id===HUMAN_ID?'You':w.name).join(' &amp; ')}`
+      : (winners[0].id===HUMAN_ID ? 'You win!' : winners[0].name+' wins!');
     html += `<div class="overlay"><div class="modal wide">
-      <h3>${sorted[0].id===HUMAN_ID ? 'You win!' : sorted[0].name+' wins.'}</h3>
+      <h3>${headline}</h3>
       <div class="results-list">
       ${sorted.map((p,i)=>`<div class="result-row"><span>${i+1}. ${p.name}</span><span>${p.totalScore} pts</span></div>`).join('')}
       </div>
