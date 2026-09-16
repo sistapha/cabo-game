@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Cabo</title>
+<title>Cambio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -81,26 +81,6 @@
   .difficulty-blurb{ font-size:.8rem; opacity:.75; margin:-8px 0 18px; min-height:2.2em; line-height:1.4; }
   .info-chip{ background:rgba(234,200,115,0.15); border:1px solid rgba(234,200,115,0.4); border-radius:999px; padding:6px 14px; font-size:.78rem; color:var(--gold-bright); font-weight:600; }
 
-  @keyframes tutorial-pulse{
-    0%,100%{ box-shadow:0 0 0 3px var(--gold-bright), 0 0 16px 3px rgba(234,200,115,0.55); }
-    50%{ box-shadow:0 0 0 3px var(--gold-bright), 0 0 28px 9px rgba(234,200,115,0.9); }
-  }
-  .tutorial-glow{ animation: tutorial-pulse 1.3s ease-in-out infinite; }
-  .tutorial-bar{
-    position:fixed; left:0; right:0; bottom:0; z-index:60;
-    background:rgba(8,20,15,0.96); border-top:2px solid var(--gold-bright);
-    padding:12px 16px calc(env(safe-area-inset-bottom) + 12px);
-    box-shadow:0 -8px 24px rgba(0,0,0,.4);
-  }
-  .tutorial-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
-  .tutorial-count{ font-size:.72rem; color:var(--gold-bright); font-weight:700; letter-spacing:.02em; }
-  .tutorial-skip{ background:none; border:none; color:rgba(244,239,225,0.6); font-size:.72rem; text-decoration:underline; cursor:pointer; padding:2px; }
-  .tutorial-text{ font-size:.92rem; line-height:1.45; color:var(--cream); margin-bottom:8px; }
-  .tutorial-next-btn{
-    padding:11px 16px; border-radius:10px; border:none; background:var(--gold-bright); color:var(--ink);
-    font-weight:700; font-size:.92rem; cursor:pointer;
-  }
-  .tutorial-waiting{ font-size:.82rem; color:var(--gold-bright); font-weight:600; opacity:.9; }
   #start-btn{
     width:100%; padding:16px; border-radius:12px; border:none; background:var(--gold-bright);
     color:var(--ink); font-size:1.15rem; font-weight:700; cursor:pointer;
@@ -108,10 +88,6 @@
   #start-rules-btn, #stats-btn{
     margin-top:14px; width:100%; padding:12px; border-radius:12px; border:1.5px solid rgba(244,239,225,0.35);
     background:transparent; color:var(--cream); font-size:.95rem; cursor:pointer;
-  }
-  #tutorial-btn{
-    margin-top:10px; width:100%; padding:14px; border-radius:12px; border:1.5px solid var(--gold-bright);
-    background:rgba(234,200,115,0.12); color:var(--gold-bright); font-size:1rem; font-weight:700; cursor:pointer;
   }
   .stat-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin:14px 0; }
   .stat-tile{ background:rgba(0,0,0,0.05); border-radius:10px; padding:10px 12px; }
@@ -169,8 +145,9 @@
   .card-face .card-suit{ font-size:calc(var(--card-w)*0.4); }
   .card-face.suit-red .card-rank, .card-face.suit-red .card-suit{ color:var(--card-red); }
   .card-face.suit-black .card-rank, .card-face.suit-black .card-suit{ color:var(--card-black); }
+  .card-face.suit-joker .card-rank, .card-face.suit-joker .card-suit{ color:var(--gold); }
 
-  /* One-shot "pop" cue on a slot whose card just changed (swap/blind-swap/king-swap).
+  /* One-shot "pop" cue on a slot whose card just changed (swap/blind-swap/queen-swap).
      Uses a keyframe animation rather than a transition, since the slot is a
      freshly-rendered element each time (innerHTML rebuild) with no prior
      state to transition from — transitions would never actually play. */
@@ -182,7 +159,6 @@
   .card-changed{ animation: card-pop .35s ease-out; }
   @media (prefers-reduced-motion: reduce){
     .card-changed{ animation:none; }
-    .tutorial-glow{ animation:none; box-shadow:0 0 0 3px var(--gold-bright), 0 0 20px 5px rgba(234,200,115,0.7); }
   }
 
   .center-row{ display:flex; gap:26px; justify-content:center; align-items:flex-start; padding:10px 0; }
@@ -208,6 +184,11 @@
     position:fixed; top:calc(env(safe-area-inset-top) + 10px); left:50%; transform:translateX(-50%);
     background:var(--gold-bright); color:var(--ink); padding:9px 18px; border-radius:999px;
     font-size:.85rem; font-weight:600; box-shadow:0 6px 16px rgba(0,0,0,.35); z-index:20; text-align:center; max-width:88vw;
+  }
+  .hint-banner-actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .hint-banner-actions button{
+    background:var(--ink); color:var(--cream); border:none; border-radius:999px;
+    padding:6px 14px; font-size:.8rem; font-weight:700; cursor:pointer; flex-shrink:0;
   }
   /* Fixed corner control so it never competes with the action bar's width
      on narrow phones — a 5th button there would risk overflowing/hiding on
@@ -254,7 +235,7 @@
 <body>
 
   <div id="start-screen">
-    <div class="brand-title">Cabo</div>
+    <div class="brand-title">Cambio</div>
     <div class="brand-sub">Memory, bluffing, and just enough cruelty. Play solo against the computer.</div>
     <div class="setup-card">
       <div class="setup-label">How many opponents?</div>
@@ -271,7 +252,6 @@
       </div>
       <div class="difficulty-blurb" id="difficulty-blurb">Solid, straightforward play \u2014 a fair fight.</div>
       <button id="start-btn">Start game</button>
-      <button id="tutorial-btn">Interactive tutorial</button>
       <button id="start-rules-btn">How to play</button>
       <button id="stats-btn">Your stats</button>
       <div id="rules-panel"></div>
@@ -287,7 +267,7 @@
 
 <script>
 /* =========================================================
-   CABO — solo vs. AI
+   CAMBIO — solo vs. AI
    ========================================================= */
 
 const HUMAN_ID = 0;
@@ -295,12 +275,12 @@ const SUITS = ['S','H','D','C'];
 const SUIT_SYMBOL = { S:'\u2660', H:'\u2665', D:'\u2666', C:'\u2663' };
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const AI_NAMES = ['Milo','Ana','Theo','Wren'];
-const UNSEEN_AVG = 6.75;
+const UNSEEN_AVG = 5.74; // mean card value across the 54-card Cambio deck (values -1..12)
 
 /* ---------- Full-deck value counts (for the Hard AI's exact odds) ---------- */
 function buildValueCounts(){
-  const counts = {};
-  for(let v=0; v<=13; v++) counts[v] = (v===0) ? 1 : (v===13 ? 3 : 4);
+  const counts = { '-1':2, '0':4 };
+  for(let v=1; v<=12; v++) counts[v] = 4;
   return counts;
 }
 
@@ -312,10 +292,11 @@ function aiDelay(ms){ return fastForward ? Math.max(60, Math.round(ms/5)) : ms; 
 
 /* ---------- Card helpers ---------- */
 function rankValue(rank, suit){
+  if(rank==='JOKER') return -1;
   if(rank==='A') return 1;
   if(rank==='J') return 11;
   if(rank==='Q') return 12;
-  if(rank==='K') return suit==='D' ? 0 : 13;
+  if(rank==='K') return 0;
   return parseInt(rank,10);
 }
 function buildDeck(){
@@ -325,6 +306,8 @@ function buildDeck(){
       deck.push({ uid: uidCounter++, suit:s, rank:r, value: rankValue(r,s), publicKnown:false });
     }
   }
+  deck.push({ uid: uidCounter++, suit:null, rank:'JOKER', value:-1, publicKnown:false });
+  deck.push({ uid: uidCounter++, suit:null, rank:'JOKER', value:-1, publicKnown:false });
   return deck;
 }
 function shuffle(arr){
@@ -335,122 +318,21 @@ function shuffle(arr){
   return arr;
 }
 function hasPower(card){
-  if(card.rank==='K') return card.suit!=='D';
-  return ['7','8','9','10','J','Q'].includes(card.rank);
+  return ['9','10','J','Q'].includes(card.rank);
 }
 function powerType(card){
-  if(['7','8'].includes(card.rank)) return 'peek-own';
-  if(['9','10'].includes(card.rank)) return 'peek-opp';
-  if(['J','Q'].includes(card.rank)) return 'blind-swap';
-  if(card.rank==='K') return 'king';
+  if(card.rank==='9') return 'self-peek';
+  if(card.rank==='10') return 'opp-spy';
+  if(card.rank==='J') return 'blind-swap';
+  if(card.rank==='Q') return 'queen-swap';
   return null;
 }
-function cardLabel(card){ return `${card.rank}${SUIT_SYMBOL[card.suit]}`; }
+function cardLabel(card){
+  if(card.removed) return '—';
+  if(card.rank==='JOKER') return 'Joker';
+  return `${card.rank}${SUIT_SYMBOL[card.suit]}`;
+}
 function isRed(suit){ return suit==='H' || suit==='D'; }
-
-/* ---------- Interactive tutorial ---------- */
-function mkCard(rank, suit){ return { uid: uidCounter++, suit, rank, value: rankValue(rank,suit), publicKnown:false }; }
-function buildTutorialSequence(){
-  return [
-    mkCard('3','S'),   // 1  You slot0
-    mkCard('K','D'),   // 2  You slot1 (value 0 — a hidden gem)
-    mkCard('9','C'),   // 3  You slot2
-    mkCard('5','D'),   // 4  You slot3
-    mkCard('6','H'),   // 5  Coach slot0
-    mkCard('8','D'),   // 6  Coach slot1
-    mkCard('10','S'),  // 7  Coach slot2
-    mkCard('Q','S'),   // 8  Coach slot3
-    mkCard('4','C'),   // 9  initial discard flip
-    mkCard('2','H'),   // 10 you draw (turn 1)
-    mkCard('A','C'),   // 11 coach auto-draw -> becomes discard top
-    mkCard('3','D'),   // 12 coach auto-draw
-    mkCard('8','S'),   // 13 you draw (peek-own power)
-    mkCard('4','H'),   // 14 coach auto-draw
-    mkCard('9','D'),   // 15 you draw (peek-opp power)
-    mkCard('5','C'),   // 16 coach auto-draw
-    mkCard('J','H'),   // 17 you draw (blind-swap power)
-    mkCard('6','D'),   // 18 coach auto-draw
-    mkCard('K','H'),   // 19 you draw (king power)
-    mkCard('7','C'),   // 20 coach auto-draw
-    mkCard('2','D'),   // 21 coach's final turn after your Cabo call
-  ];
-}
-const TUTORIAL_STEPS = [
-  { type:'info', msg:"Welcome! I'm Coach. Let's play a real practice round together \u2014 I'll tell you exactly what to tap, one step at a time." },
-  { type:'info', msg:"Your grid has 4 cards: the two you just peeked (bottom row), and two total mysteries (top row). The whole game is about making these four add up to as little as possible." },
-  { type:'action', restrict:{turnAction:'deck'}, highlight:{type:'pile', which:'draw'}, msg:"On your turn you either draw from the deck or take the discard pile's top card. Let's start simple \u2014 tap the draw pile.", advanceOn:'drew-deck' },
-  { type:'action', restrict:{drawnAction:'swap'}, highlight:{type:'slot', player:0, slot:2}, msg:"Whatever you drew, compare it to the bad card you peeked at (the 9). If it's better, tap 'Swap into your grid', then tap that 9 to replace it.", advanceOn:'swapped' },
-  { type:'action', restrict:{turnAction:'discard'}, highlight:{type:'pile', which:'discard'}, msg:"Coach just discarded a card, face-up. Unlike the deck, you already know exactly what it is before you take it \u2014 tap the discard pile to grab it.", advanceOn:'drew-discard' },
-  { type:'action', highlight:{type:'slot', player:0, slot:3}, msg:"Discard-pile cards MUST go into your grid \u2014 no backing out. Tap your other peeked card (the 5) to swap this one in.", advanceOn:'swapped' },
-  { type:'info', msg:"Nice. And here's the twist: any card taken from the discard pile stays face-up for everyone, forever \u2014 a great way to track what opponents are holding, too." },
-  { type:'action', restrict:{turnAction:'deck'}, highlight:{type:'pile', which:'draw'}, msg:"Now let's learn the power cards. Tap the draw pile.", advanceOn:'drew-deck' },
-  { type:'action', restrict:{drawnAction:'power'}, msg:"You drew a power card! Instead of swapping it in, tap 'Discard & use power' to trigger its ability.", advanceOn:'used-power:peek-own' },
-  { type:'action', highlight:{type:'slot', player:0, slot:0}, msg:"7s and 8s let you peek at one of your OWN face-down cards. Tap your other unknown card to see what it is.", advanceOn:'peeked-own' },
-  { type:'info', msg:"Now you know three of your four cards. Only one true mystery left!" },
-  { type:'action', restrict:{turnAction:'deck'}, highlight:{type:'pile', which:'draw'}, msg:"Draw pile again, please.", advanceOn:'drew-deck' },
-  { type:'action', restrict:{drawnAction:'power'}, msg:"Another power card. Discard it to use its power.", advanceOn:'used-power:peek-opp' },
-  { type:'action', highlight:{type:'seat', player:1}, msg:"9s and 10s let you peek at ONE of an opponent's cards. Tap any of Coach's cards to spy on it.", advanceOn:'peeked-opp' },
-  { type:'info', msg:"That's valuable intel \u2014 now you know something Coach has no idea you know." },
-  { type:'action', restrict:{turnAction:'deck'}, highlight:{type:'pile', which:'draw'}, msg:"One more time \u2014 tap the draw pile.", advanceOn:'drew-deck' },
-  { type:'action', restrict:{drawnAction:'power'}, msg:"A Jack or Queen! Discard it to use its power.", advanceOn:'used-power:blind-swap' },
-  { type:'action', highlight:{type:'seat', player:1}, msg:"Jacks and Queens let you blind-swap ANY two cards on the table \u2014 even two of an opponent's, without either of you seeing the values! Tap one of Coach's cards, then tap another of Coach's cards to swap them.", advanceOn:'blind-swapped' },
-  { type:'info', msg:"Neither of you knows what just happened in Coach's grid. That's the fun of a blind swap \u2014 use it to bury a bad card you know about, or just to scramble an opponent's memory." },
-  { type:'action', restrict:{turnAction:'deck'}, highlight:{type:'pile', which:'draw'}, msg:"Last power card, promise. Tap the draw pile.", advanceOn:'drew-deck' },
-  { type:'action', restrict:{drawnAction:'power'}, msg:"A King! Discard it to use its power.", advanceOn:'used-power:king' },
-  { type:'action', highlight:{type:'seat', player:1}, msg:"Kings let you peek at ANY card, then choose whether to swap it with another. Tap one of Coach's cards to peek \u2014 then try tapping 'Leave it' when asked. (Tap 'Swap it' instead and you'll just need one more tap \u2014 any other card \u2014 to finish the swap.)", advanceOn:'king-resolved' },
-  { type:'info', msg:"You've now used every power in the game. Let's see if you're ready to end the round." },
-  { type:'action', restrict:{turnAction:'cabo'}, highlight:{type:'cabo-button'}, msg:"You know three of your four cards, and together they only add up to a handful of points. When you're confident you're low, tap 'Call CABO' instead of drawing.", advanceOn:'called-cabo' },
-  { type:'info', msg:"Calling Cabo means everyone else gets exactly one more turn, then every hand flips face-up. If you weren't actually the lowest, you'd take a 10-point penalty \u2014 so only call when you're fairly sure. Let's see how you did!" }
-];
-function tutorialCheckpoint(name){
-  if(!game || !game.tutorialActive) return;
-  const step = TUTORIAL_STEPS[game.tutorialStep];
-  if(step && step.type==='action' && step.advanceOn===name){
-    tutorialGoTo(game.tutorialStep+1);
-  }
-}
-function tutorialGoTo(idx){
-  game.tutorialStep = idx;
-  const step = TUTORIAL_STEPS[idx];
-  game.tutorialHighlight = step ? (step.highlight || null) : null;
-}
-function tutorialNext(){ tutorialGoTo(game.tutorialStep+1); render(); }
-function tutorialSkip(){ game.tutorialActive = false; showStartScreen(); }
-function tutorialFinish(){ game.tutorialActive = false; showStartScreen(); }
-function startTutorial(){
-  const players = [
-    { id:0, name:'You', isHuman:true, slots:[], roundScore:0, totalScore:0 },
-    { id:1, name:'Coach', isHuman:false, isTutorialBot:true, slots:[], roundScore:0, totalScore:0,
-      memory:{ own:[null,null,null,null], opp:{0:[null,null,null,null]} } }
-  ];
-  game = {
-    players, round:1, drawPile:[], discardPile:[], turnOrder:[0,1], turnIdx:0,
-    mode:'peek', pendingAction:null, pendingCard:null, pendingSource:null,
-    caboCallerId:null, finalTurnsLeft:0, log:[], infoModal:null, showLog:false,
-    difficulty:'normal', fullValueCounts: buildValueCounts(), initialDrawPileSize:0,
-    tutorialActive:true, tutorialStep:0, tutorialHighlight:null
-  };
-  const seq = buildTutorialSequence();
-  const deck = seq.slice().reverse();
-  for(const p of game.players){
-    p.slots = [deck.pop(), deck.pop(), deck.pop(), deck.pop()];
-    p.roundScore = 0;
-  }
-  game.drawPile = deck;
-  game.discardPile = [game.drawPile.pop()];
-  game.initialDrawPileSize = game.drawPile.length;
-  logMsg('Tutorial round begins.');
-  render();
-}
-function runTutorialBotTurn(p){
-  if(!ensureDrawPile()) return;
-  const drawn = game.drawPile.pop();
-  logMsg(`${p.name} drew a card and discarded it.`);
-  setTimeout(()=>{
-    game.discardPile.push(drawn);
-    advanceTurn();
-  }, 700);
-}
 
 /* ---------- Game setup ---------- */
 function newGame(numAI, difficulty){
@@ -472,7 +354,7 @@ function newGame(numAI, difficulty){
   }
   game = {
     players, round:1, drawPile:[], discardPile:[], turnOrder:[], turnIdx:0,
-    mode:'peek', pendingAction:null, pendingCard:null, pendingSource:null,
+    mode:'peek', pendingAction:null, pendingCard:null, pendingSource:null, pendingShed:null,
     caboCallerId:null, finalTurnsLeft:0, log:[], infoModal:null, showLog:false,
     difficulty: difficulty || 'normal', fullValueCounts: buildValueCounts(), initialDrawPileSize: 0
   };
@@ -504,6 +386,7 @@ function startRound(){
   game.pendingAction = null;
   game.pendingCard = null;
   game.pendingSource = null;
+  game.pendingShed = null;
   logMsg(`Round ${game.round} begins.`);
   render();
 }
@@ -523,10 +406,6 @@ function beginTurn(){
   if(p.isHuman){
     game.mode = 'human-turn';
     render();
-  } else if(p.isTutorialBot){
-    game.mode = 'ai-turn';
-    render();
-    setTimeout(()=>runTutorialBotTurn(p), 800);
   } else {
     game.mode = 'ai-turn';
     render();
@@ -547,9 +426,8 @@ function advanceTurn(){
 function callCabo(playerId){
   game.caboCallerId = playerId;
   game.finalTurnsLeft = game.players.length - 1;
-  logMsg(`${getPlayer(playerId).name} called CABO!`);
+  logMsg(`${getPlayer(playerId).name} called CAMBIO!`);
   hapticPulse(playerId===HUMAN_ID ? 45 : [15,40,15]);
-  if(playerId===HUMAN_ID) tutorialCheckpoint('called-cabo');
   advanceTurn();
 }
 
@@ -593,7 +471,7 @@ function doBlindSwap(a,b){
   clearMemoryForSlot(a.player, a.slot);
   clearMemoryForSlot(b.player, b.slot);
 }
-function doKingSwap(actor, peeked, target){
+function doPeekedSwap(actor, peeked, target){
   const peekedCard = getPlayer(peeked.player).slots[peeked.slot];
   swapSlotsRaw(peeked, target);
   clearMemoryForSlot(peeked.player, peeked.slot);
@@ -607,6 +485,112 @@ function doKingSwap(actor, peeked, target){
   }
 }
 
+/* ---------- Shedding (out-of-turn matching) ---------- */
+function makeEmptySlot(){ return { uid: uidCounter++, suit:null, rank:null, value:0, publicKnown:true, removed:true }; }
+function rawDiscardPush(card){ game.discardPile.push(card); }
+function runShedChain(onAllDone){
+  if(!game || game.caboCallerId!==null || game.discardPile.length===0){ onAllDone(); return; }
+  offerHumanShed(humanDidShed=>{
+    if(humanDidShed){ runShedChain(onAllDone); return; }
+    const aiDidShed = runAiShedChecks();
+    if(aiDidShed){ runShedChain(onAllDone); return; }
+    onAllDone();
+  });
+}
+function offerHumanShed(next){
+  if(game.discardPile.length===0){ next(false); return; }
+  game.mode = 'shed-opportunity';
+  game.pendingShed = { resolve: next };
+  render();
+}
+function handleHumanShedAttempt(slotIdx){
+  const p = getPlayer(HUMAN_ID);
+  const card = p.slots[slotIdx];
+  if(!card || card.removed || !game.pendingShed) return;
+  const top = game.discardPile[game.discardPile.length-1];
+  const resolve = game.pendingShed.resolve;
+  game.pendingShed = null;
+  const isMatch = card.value===top.value;
+  card.publicKnown = true;
+  if(isMatch){
+    rawDiscardPush(card);
+    p.slots[slotIdx] = makeEmptySlot();
+    logMsg(`You shed a matching ${cardLabel(card)}!`);
+    hapticPulse(40);
+    markChanged({player:HUMAN_ID, slot:slotIdx});
+  } else {
+    logMsg(`You tried to shed ${cardLabel(card)} — no match for the ${cardLabel(top)} on top. Drew a penalty card.`);
+    hapticPulse([20,20,20]);
+    drawPenaltyCard(p);
+    if(game.mode==='round-end'){ render(); return; }
+    markChanged({player:HUMAN_ID, slot:slotIdx});
+  }
+  render();
+  resolve(isMatch);
+}
+function handleHumanShedPass(){
+  if(game.mode!=='shed-opportunity' || !game.pendingShed) return;
+  const resolve = game.pendingShed.resolve;
+  game.pendingShed = null;
+  resolve(false);
+}
+function runAiShedChecks(){
+  if(game.discardPile.length===0) return false;
+  const top = game.discardPile[game.discardPile.length-1];
+  for(const p of game.players){
+    if(p.isHuman) continue;
+    for(let i=0;i<p.slots.length;i++){
+      const card = p.slots[i];
+      if(!card || card.removed) continue;
+      if(p.memory.own[i]===top.value && aiWillAttemptShed(p)){
+        rawDiscardPush(card);
+        p.slots[i] = makeEmptySlot();
+        p.memory.own[i] = null;
+        markChanged({player:p.id, slot:i});
+        logMsg(`${p.name} shed a matching ${cardLabel(card)}!`);
+        hapticPulse([15,30]);
+        return true;
+      }
+    }
+  }
+  return false;
+}
+function aiWillAttemptShed(p){
+  if(p.difficulty==='hard') return true;
+  if(p.difficulty==='easy') return Math.random()<0.7;
+  return Math.random()<0.85;
+}
+// Places a card into a player's grid, reusing an already-shed (removed) slot
+// if one exists, else growing the grid by one. Syncs every other AI's
+// memory of this player's slots (and the player's own memory, if AI) to
+// stay array-length-matched with p.slots — used both for penalty draws and
+// for the rare case where a player's whole grid has been shed away and a
+// swap-in needs somewhere to land.
+function placeCardInGrid(p, card){
+  const emptyIdx = p.slots.findIndex(c=>c && c.removed);
+  let idx;
+  if(emptyIdx!==-1){ p.slots[emptyIdx] = card; idx = emptyIdx; }
+  else { p.slots.push(card); idx = p.slots.length-1; }
+  if(!p.isHuman){
+    if(emptyIdx!==-1) p.memory.own[idx] = null;
+    else p.memory.own.push(null);
+  }
+  for(const other of game.players){
+    if(other.isHuman || other.id===p.id) continue;
+    const arr = other.memory.opp[p.id];
+    if(!arr) continue;
+    if(emptyIdx!==-1) arr[idx] = null;
+    else arr.push(null);
+  }
+  return idx;
+}
+function drawPenaltyCard(p){
+  if(!ensureDrawPile()) return;
+  const card = game.drawPile.pop();
+  const idx = placeCardInGrid(p, card);
+  markChanged({player:p.id, slot:idx});
+}
+
 /* ---------- Human actions ---------- */
 function humanDrawDeck(){
   if(!ensureDrawPile()){ render(); return; }
@@ -614,7 +598,26 @@ function humanDrawDeck(){
   game.pendingCard = card;
   game.pendingSource = 'deck';
   game.mode = 'human-drawn';
-  tutorialCheckpoint('drew-deck');
+  render();
+}
+// Entry point for "swap this drawn/discard-pile card into your grid." If
+// every one of your slots has already been shed away, there's nothing to
+// tap — place it as your only card instead of leaving the UI with no valid
+// target.
+function beginSwapOwn(){
+  const human = getPlayer(HUMAN_ID);
+  if(!human.slots.some(c=>!c.removed)){
+    const incoming = game.pendingCard;
+    if(game.pendingSource==='discard') incoming.publicKnown = true;
+    const idx = placeCardInGrid(human, incoming);
+    markChanged({player:HUMAN_ID, slot:idx});
+    game.pendingCard = null;
+    logMsg(`You placed the card as your only card.`);
+    endHumanTurnAfterAction();
+    return;
+  }
+  game.pendingAction = { type:'swap-own' };
+  game.mode = 'awaiting-target';
   render();
 }
 function humanDrawDiscard(){
@@ -622,54 +625,58 @@ function humanDrawDiscard(){
   const card = game.discardPile.pop();
   game.pendingCard = card;
   game.pendingSource = 'discard';
-  game.pendingAction = { type:'swap-own' };
-  game.mode = 'awaiting-target';
-  tutorialCheckpoint('drew-discard');
-  render();
+  beginSwapOwn();
 }
 function discardPendingForPower(){
   const card = game.pendingCard;
-  game.discardPile.push(card);
+  rawDiscardPush(card);
   game.pendingCard = null;
   const pt = powerType(card);
   logMsg(`You discarded ${cardLabel(card)} to use its power.`);
   hapticPulse(20);
-  tutorialCheckpoint('used-power:'+pt);
   beginPowerFlow(pt);
 }
 function discardPendingNoEffect(){
   const c = game.pendingCard;
-  game.discardPile.push(c);
+  rawDiscardPush(c);
   game.pendingCard = null;
   logMsg(`You discarded ${cardLabel(c)}.`);
   endHumanTurnAfterAction();
 }
 function beginPowerFlow(pt){
-  if(pt==='peek-own') game.pendingAction = { type:'peek-own' };
-  else if(pt==='peek-opp') game.pendingAction = { type:'peek-opp' };
+  if(pt==='self-peek') game.pendingAction = { type:'peek-own' };
+  else if(pt==='opp-spy') game.pendingAction = { type:'peek-opp' };
   else if(pt==='blind-swap') game.pendingAction = { type:'blindswap-1' };
-  else if(pt==='king') game.pendingAction = { type:'king-peek' };
+  else if(pt==='queen-swap') game.pendingAction = { type:'queen-peek' };
   game.mode = 'awaiting-target';
   render();
 }
-function endHumanTurnAfterAction(){ advanceTurn(); }
+function endHumanTurnAfterAction(){ runShedChain(advanceTurn); }
+function endAiTurnAfterAction(){ runShedChain(advanceTurn); }
 
 function isSelectable(playerId, slotIdx){
   const a = game.pendingAction;
   if(!a) return false;
+  const card = getPlayer(playerId).slots[slotIdx];
+  if(!card || card.removed) return false;
   switch(a.type){
     case 'swap-own': return playerId===HUMAN_ID;
     case 'peek-own': return playerId===HUMAN_ID;
     case 'peek-opp': return playerId!==HUMAN_ID;
     case 'blindswap-1': return true;
     case 'blindswap-2': return !(playerId===a.first.player && slotIdx===a.first.slot);
-    case 'king-peek': return true;
-    case 'king-swap-target': return !(playerId===a.peeked.player && slotIdx===a.peeked.slot);
+    case 'queen-peek': return playerId!==HUMAN_ID;
+    case 'queen-swap-target': return playerId===HUMAN_ID;
     default: return false;
   }
 }
 function onSlotClick(playerId, slotIdx){
   if(game.infoModal) return;
+  if(game.mode==='shed-opportunity'){
+    if(playerId!==HUMAN_ID) return;
+    handleHumanShedAttempt(slotIdx);
+    return;
+  }
   if(game.mode!=='awaiting-target') return;
   if(!isSelectable(playerId, slotIdx)) return;
   const a = game.pendingAction;
@@ -684,11 +691,11 @@ function onSlotClick(playerId, slotIdx){
     case 'blindswap-2':
       performBlindSwapHuman(a.first, {player:playerId, slot:slotIdx});
       break;
-    case 'king-peek':
-      performKingPeekHuman(playerId, slotIdx);
+    case 'queen-peek':
+      performQueenPeekHuman(playerId, slotIdx);
       break;
-    case 'king-swap-target':
-      performKingSwapHuman(a.peeked, {player:playerId, slot:slotIdx});
+    case 'queen-swap-target':
+      performQueenSwapHuman(a.peeked, {player:playerId, slot:slotIdx});
       break;
   }
 }
@@ -699,41 +706,45 @@ function performSwap(playerId, slotIdx){
   if(game.pendingSource==='discard') incoming.publicKnown = true;
   p.slots[slotIdx] = incoming;
   markChanged({player:playerId, slot:slotIdx});
-  game.discardPile.push(old);
+  rawDiscardPush(old);
   game.pendingCard = null;
   logMsg(`You swapped a card into your grid.`);
-  tutorialCheckpoint('swapped');
   endHumanTurnAfterAction();
 }
 function performSelfPeek(playerId, slotIdx){
   const card = getPlayer(playerId).slots[slotIdx];
-  tutorialCheckpoint('peeked-own');
   showInfoModal('You peek at your card', `${cardLabel(card)} — worth ${card.value} point${card.value===1?'':'s'}.`, endHumanTurnAfterAction);
 }
 function performOppPeek(playerId, slotIdx){
   const card = getPlayer(playerId).slots[slotIdx];
-  tutorialCheckpoint('peeked-opp');
   showInfoModal(`You peek at ${getPlayer(playerId).name}'s card`, `${cardLabel(card)} — worth ${card.value} point${card.value===1?'':'s'}.`, endHumanTurnAfterAction);
 }
 function performBlindSwapHuman(a,b){
   doBlindSwap(a,b);
   logMsg(`You blind-swapped two cards on the table.`);
-  tutorialCheckpoint('blind-swapped');
   endHumanTurnAfterAction();
 }
-function performKingPeekHuman(playerId, slotIdx){
+function performQueenPeekHuman(playerId, slotIdx){
   const card = getPlayer(playerId).slots[slotIdx];
   showInfoModalWithChoice(
     `You peek: ${cardLabel(card)} (${card.value} pt${card.value===1?'':'s'})`,
-    'Swap this card with another one on the table?',
-    ()=>{ game.pendingAction = { type:'king-swap-target', peeked:{player:playerId, slot:slotIdx} }; game.mode='awaiting-target'; render(); },
-    ()=>{ tutorialCheckpoint('king-resolved'); endHumanTurnAfterAction(); }
+    'Swap this card with one of your own?',
+    ()=>{
+      const human = getPlayer(HUMAN_ID);
+      if(!human.slots.some(c=>!c.removed)){
+        // Nothing of your own to trade away — treat as declining the swap.
+        logMsg(`You have nothing to swap it with.`);
+        endHumanTurnAfterAction();
+        return;
+      }
+      game.pendingAction = { type:'queen-swap-target', peeked:{player:playerId, slot:slotIdx} }; game.mode='awaiting-target'; render();
+    },
+    ()=>{ endHumanTurnAfterAction(); }
   );
 }
-function performKingSwapHuman(peeked, target){
-  doKingSwap({isHuman:true}, peeked, target);
-  logMsg(`You used the King's power to swap two cards.`);
-  tutorialCheckpoint('king-resolved');
+function performQueenSwapHuman(peeked, target){
+  doPeekedSwap({isHuman:true}, peeked, target);
+  logMsg(`You used the Queen's power to swap two cards.`);
   endHumanTurnAfterAction();
 }
 
@@ -743,6 +754,7 @@ function performKingSwapHuman(peeked, target){
 // even if this particular AI never personally peeked or swapped it in.
 function knownValue(observer, playerId, slotIdx){
   const card = getPlayer(playerId).slots[slotIdx];
+  if(card.removed) return 0;
   if(card.publicKnown) return card.value;
   if(playerId===observer.id) return observer.memory.own[slotIdx];
   const mem = observer.memory.opp[playerId];
@@ -752,8 +764,9 @@ function computeRemainingAverage(p){
   const counts = Object.assign({}, game.fullValueCounts);
   function remove(v){ if(counts[v]>0) counts[v]--; }
   for(const pl of game.players){
-    for(let i=0;i<4;i++){
+    for(let i=0;i<pl.slots.length;i++){
       const c = pl.slots[i];
+      if(c.removed) continue;
       if(c.publicKnown) remove(c.value);
       else if(pl.id===p.id && p.memory.own[i]!==null) remove(p.memory.own[i]);
     }
@@ -763,48 +776,58 @@ function computeRemainingAverage(p){
     for(const v of p.memory.opp[oid]) if(v!==null) remove(v);
   }
   let total=0, count=0;
-  for(let v=0; v<=13; v++){ total += v*counts[v]; count += counts[v]; }
+  for(let v=-1; v<=12; v++){ total += v*counts[v]; count += counts[v]; }
   return count>0 ? total/count : UNSEEN_AVG;
 }
 function unseenEstimateFor(p){
   return p.difficulty==='hard' ? computeRemainingAverage(p) : UNSEEN_AVG;
 }
 function caboThreshold(p){
-  if(p.difficulty==='easy') return 2 + Math.random()*13;
+  if(p.difficulty==='easy') return 1.7 + Math.random()*11;
   if(p.difficulty==='hard'){
     const frac = game.initialDrawPileSize>0 ? (game.drawPile.length/game.initialDrawPileSize) : 0;
-    return 4.5 + 2.5*frac;
+    return 3.8 + 2.1*frac;
   }
   return p.riskiness;
 }
 function discardPickupThreshold(p){
-  if(p.difficulty==='easy') return 1;
+  if(p.difficulty==='easy') return 0;
   if(p.difficulty==='hard') return 4;
   return 3;
 }
 function aiEstimateScore(p){
   const u = unseenEstimateFor(p);
   let total = 0;
-  for(let i=0;i<4;i++) total += (p.memory.own[i]!==null ? p.memory.own[i] : u);
+  for(let i=0;i<p.slots.length;i++){
+    if(p.slots[i].removed) continue;
+    total += (p.memory.own[i]!==null ? p.memory.own[i] : u);
+  }
   return total;
 }
 function aiWorstKnownSlot(p){
   let bestIdx=-1, bestVal=-Infinity;
-  for(let i=0;i<4;i++){
+  for(let i=0;i<p.slots.length;i++){
+    if(p.slots[i].removed) continue;
     if(p.memory.own[i]!==null && p.memory.own[i]>bestVal){ bestVal=p.memory.own[i]; bestIdx=i; }
   }
   return bestIdx===-1 ? null : { slot:bestIdx, value:bestVal };
 }
 function aiRandomUnknownSlot(p){
   const unknown = [];
-  for(let i=0;i<4;i++) if(p.memory.own[i]===null) unknown.push(i);
+  for(let i=0;i<p.slots.length;i++) if(!p.slots[i].removed && p.memory.own[i]===null) unknown.push(i);
   if(unknown.length===0) return null;
   return unknown[Math.floor(Math.random()*unknown.length)];
+}
+// -1 signals "this player has no live slot at all" (their whole grid has
+// been shed away) — callers must not blindly index with it.
+function aiAnySlot(p){
+  for(let i=0;i<p.slots.length;i++) if(!p.slots[i].removed) return i;
+  return -1;
 }
 function runAiTurn(p){
   if(p.difficulty==='easy' && Math.random()<0.15){
     const known = [];
-    for(let i=0;i<4;i++) if(p.memory.own[i]!==null) known.push(i);
+    for(let i=0;i<p.slots.length;i++) if(!p.slots[i].removed && p.memory.own[i]!==null) known.push(i);
     if(known.length){
       const idx = known[Math.floor(Math.random()*known.length)];
       p.memory.own[idx] = null;
@@ -814,7 +837,7 @@ function runAiTurn(p){
   if(game.caboCallerId===null){
     const est = aiEstimateScore(p);
     if(est <= caboThreshold(p)){
-      logMsg(`${p.name} calls CABO!`);
+      logMsg(`${p.name} calls CAMBIO!`);
       callCabo(p.id);
       return;
     }
@@ -825,17 +848,23 @@ function runAiTurn(p){
   const worstVal = worst ? worst.value : u + 1;
   const pickupThresh = discardPickupThreshold(p);
 
-  if(topDiscard && topDiscard.value <= pickupThresh && topDiscard.value < worstVal){
-    const slot = worst ? worst.slot : (aiRandomUnknownSlot(p) ?? Math.floor(Math.random()*4));
+  if(topDiscard && !topDiscard.removed && topDiscard.value <= pickupThresh && topDiscard.value < worstVal){
+    const slot = worst ? worst.slot : (aiRandomUnknownSlot(p) ?? aiAnySlot(p));
     game.discardPile.pop();
-    const old = p.slots[slot];
     topDiscard.publicKnown = true;
-    p.slots[slot] = topDiscard;
-    markChanged({player:p.id, slot});
-    game.discardPile.push(old);
-    p.memory.own[slot] = topDiscard.value;
+    if(slot===-1){
+      const idx = placeCardInGrid(p, topDiscard);
+      p.memory.own[idx] = topDiscard.value;
+      markChanged({player:p.id, slot:idx});
+    } else {
+      const old = p.slots[slot];
+      p.slots[slot] = topDiscard;
+      markChanged({player:p.id, slot});
+      rawDiscardPush(old);
+      p.memory.own[slot] = topDiscard.value;
+    }
     logMsg(`${p.name} took the top of the discard pile and swapped it in.`);
-    setTimeout(advanceTurn, aiDelay(900));
+    setTimeout(endAiTurnAfterAction, aiDelay(900));
     return;
   }
 
@@ -848,42 +877,67 @@ function aiHandleDrawn(p, drawn){
   const worst = aiWorstKnownSlot(p);
   const compareVal = worst ? worst.value : unseenEstimateFor(p);
   if(drawn.value < compareVal - 0.5){
-    const slot = worst ? worst.slot : (aiRandomUnknownSlot(p) ?? Math.floor(Math.random()*4));
-    const old = p.slots[slot];
-    p.slots[slot] = drawn;
-    markChanged({player:p.id, slot});
-    game.discardPile.push(old);
-    p.memory.own[slot] = drawn.value;
+    const slot = worst ? worst.slot : (aiRandomUnknownSlot(p) ?? aiAnySlot(p));
+    if(slot===-1){
+      const idx = placeCardInGrid(p, drawn);
+      p.memory.own[idx] = drawn.value;
+      markChanged({player:p.id, slot:idx});
+    } else {
+      const old = p.slots[slot];
+      p.slots[slot] = drawn;
+      markChanged({player:p.id, slot});
+      rawDiscardPush(old);
+      p.memory.own[slot] = drawn.value;
+    }
     logMsg(`${p.name} swapped the drawn card into their grid.`);
-    setTimeout(advanceTurn, aiDelay(900));
+    setTimeout(endAiTurnAfterAction, aiDelay(900));
     return;
   }
   if(hasPower(drawn)){
-    game.discardPile.push(drawn);
+    rawDiscardPush(drawn);
     const pt = powerType(drawn);
     logMsg(`${p.name} discarded it to use its power.`);
     setTimeout(()=>aiUsePower(p, pt), aiDelay(800));
     return;
   }
-  game.discardPile.push(drawn);
+  rawDiscardPush(drawn);
   logMsg(`${p.name} discarded it.`);
-  setTimeout(advanceTurn, aiDelay(700));
+  setTimeout(endAiTurnAfterAction, aiDelay(700));
+}
+// Players with a fully shed-away grid (every slot removed) have nothing a
+// peek/spy/swap power can act on — filter them out before picking a target.
+function playersWithLiveSlots(list){
+  return list.filter(pl=>pl.slots.some(c=>!c.removed));
 }
 function aiUsePower(p, pt){
-  if(pt==='peek-own'){
-    const slot = aiRandomUnknownSlot(p);
-    if(slot!==null){ p.memory.own[slot] = p.slots[slot].value; }
-    logMsg(`${p.name} peeked at one of their own cards.`);
-    setTimeout(advanceTurn, aiDelay(700));
-  } else if(pt==='peek-opp'){
-    const others = game.players.filter(pl=>pl.id!==p.id);
+  if(pt==='self-peek'){
+    const slot = aiRandomUnknownSlot(p) ?? aiAnySlot(p);
+    if(slot===-1){
+      logMsg(`${p.name} has nothing left to peek at.`);
+    } else {
+      p.memory.own[slot] = p.slots[slot].value;
+      logMsg(`${p.name} peeked at one of their own cards.`);
+    }
+    setTimeout(endAiTurnAfterAction, aiDelay(700));
+  } else if(pt==='opp-spy'){
+    const others = playersWithLiveSlots(game.players.filter(pl=>pl.id!==p.id));
+    if(!others.length){
+      logMsg(`${p.name} has no one to spy on.`);
+      setTimeout(endAiTurnAfterAction, aiDelay(700));
+      return;
+    }
     const target = others[Math.floor(Math.random()*others.length)];
-    const unknownSlots = [];
-    for(let i=0;i<4;i++) if(knownValue(p, target.id, i)===null) unknownSlots.push(i);
-    const slot = unknownSlots.length ? unknownSlots[Math.floor(Math.random()*unknownSlots.length)] : Math.floor(Math.random()*4);
+    const unknownSlots = [], liveSlots = [];
+    for(let i=0;i<target.slots.length;i++){
+      if(target.slots[i].removed) continue;
+      liveSlots.push(i);
+      if(knownValue(p, target.id, i)===null) unknownSlots.push(i);
+    }
+    const slot = unknownSlots.length ? unknownSlots[Math.floor(Math.random()*unknownSlots.length)]
+               : liveSlots[Math.floor(Math.random()*liveSlots.length)];
     p.memory.opp[target.id][slot] = target.slots[slot].value;
     logMsg(`${p.name} peeked at one of ${target.isHuman ? 'your' : target.name+"'s"} cards.`);
-    setTimeout(advanceTurn, aiDelay(700));
+    setTimeout(endAiTurnAfterAction, aiDelay(700));
   } else if(pt==='blind-swap'){
     const worst = aiWorstKnownSlot(p);
     if(worst && worst.value>=8){
@@ -892,70 +946,74 @@ function aiUsePower(p, pt){
         outer:
         for(const other of game.players){
           if(other.id===p.id) continue;
-          for(let i=0;i<4;i++){
+          for(let i=0;i<other.slots.length;i++){
+            if(other.slots[i].removed) continue;
             const v = knownValue(p, other.id, i);
             if(v!==null && v<=3){ target=other; tSlot=i; break outer; }
           }
         }
       }
       if(!target){
-        const others = game.players.filter(pl=>pl.id!==p.id);
-        target = others[Math.floor(Math.random()*others.length)];
-        tSlot = Math.floor(Math.random()*4);
+        const others = playersWithLiveSlots(game.players.filter(pl=>pl.id!==p.id));
+        if(others.length){
+          target = others[Math.floor(Math.random()*others.length)];
+          tSlot = aiAnySlot(target);
+        }
       }
-      doBlindSwap({player:p.id, slot:worst.slot}, {player:target.id, slot:tSlot});
-      logMsg(`${p.name} blind-swapped one of their cards with ${target.isHuman ? 'yours' : target.name+"'s"}.`);
+      if(target && tSlot!==-1){
+        doBlindSwap({player:p.id, slot:worst.slot}, {player:target.id, slot:tSlot});
+        logMsg(`${p.name} blind-swapped one of their cards with ${target.isHuman ? 'yours' : target.name+"'s"}.`);
+      } else {
+        logMsg(`${p.name} had no one to swap with.`);
+      }
     } else {
       logMsg(`${p.name} chose not to use the swap power.`);
     }
-    setTimeout(advanceTurn, aiDelay(800));
-  } else if(pt==='king'){
-    const peekSelf = Math.random()<0.5;
-    let targetPlayerId, slot;
-    if(peekSelf || game.players.length===1){
-      targetPlayerId = p.id;
-      slot = aiRandomUnknownSlot(p) ?? Math.floor(Math.random()*4);
-    } else {
-      const others = game.players.filter(pl=>pl.id!==p.id);
-      const target = others[Math.floor(Math.random()*others.length)];
-      targetPlayerId = target.id;
-      const unknownSlots = [];
-      for(let i=0;i<4;i++) if(knownValue(p, target.id, i)===null) unknownSlots.push(i);
-      slot = unknownSlots.length ? unknownSlots[Math.floor(Math.random()*unknownSlots.length)] : Math.floor(Math.random()*4);
+    setTimeout(endAiTurnAfterAction, aiDelay(800));
+  } else if(pt==='queen-swap'){
+    const others = playersWithLiveSlots(game.players.filter(pl=>pl.id!==p.id));
+    if(!others.length){
+      logMsg(`${p.name} has no one to target with the Queen's power.`);
+      setTimeout(endAiTurnAfterAction, aiDelay(900));
+      return;
     }
-    const seenValue = getPlayer(targetPlayerId).slots[slot].value;
-    if(targetPlayerId===p.id) p.memory.own[slot] = seenValue;
-    else p.memory.opp[targetPlayerId][slot] = seenValue;
-    logMsg(`${p.name} used the King's power to peek at a card.`);
+    const target = others[Math.floor(Math.random()*others.length)];
+    const unknownSlots = [], liveSlots = [];
+    for(let i=0;i<target.slots.length;i++){
+      if(target.slots[i].removed) continue;
+      liveSlots.push(i);
+      if(knownValue(p, target.id, i)===null) unknownSlots.push(i);
+    }
+    const slot = unknownSlots.length ? unknownSlots[Math.floor(Math.random()*unknownSlots.length)]
+               : liveSlots[Math.floor(Math.random()*liveSlots.length)];
+    const seenValue = target.slots[slot].value;
+    if(!p.memory.opp[target.id]) p.memory.opp[target.id] = target.slots.map(()=>null);
+    p.memory.opp[target.id][slot] = seenValue;
+    logMsg(`${p.name} used the Queen's power to peek at ${target.isHuman?'your':target.name+"'s"} card.`);
 
-    const shouldSwap = (targetPlayerId===p.id && seenValue>=8) || (targetPlayerId!==p.id && seenValue<=3 && Math.random()<0.6);
-    if(shouldSwap){
-      let otherPlayerId, otherSlot;
-      if(targetPlayerId===p.id){
-        const others = game.players.filter(pl=>pl.id!==p.id);
-        const target = others[Math.floor(Math.random()*others.length)];
-        otherPlayerId = target.id; otherSlot = Math.floor(Math.random()*4);
-      } else {
-        otherPlayerId = p.id;
-        const w = aiWorstKnownSlot(p);
-        otherSlot = w ? w.slot : (aiRandomUnknownSlot(p) ?? Math.floor(Math.random()*4));
-      }
-      doKingSwap(p, {player:targetPlayerId, slot}, {player:otherPlayerId, slot:otherSlot});
-      logMsg(`${p.name} swapped the card they peeked at with another.`);
+    const worst = aiWorstKnownSlot(p);
+    const worstVal = worst ? worst.value : unseenEstimateFor(p);
+    const shouldSwap = seenValue < worstVal - 0.5;
+    const ownSlot = worst ? worst.slot : (aiRandomUnknownSlot(p) ?? aiAnySlot(p));
+    if(shouldSwap && ownSlot!==-1){
+      doPeekedSwap(p, {player:target.id, slot}, {player:p.id, slot:ownSlot});
+      logMsg(`${p.name} swapped it in for one of their own.`);
+    } else {
+      logMsg(`${p.name} chose not to swap.`);
     }
-    setTimeout(advanceTurn, aiDelay(900));
+    setTimeout(endAiTurnAfterAction, aiDelay(900));
   } else {
-    setTimeout(advanceTurn, aiDelay(500));
+    setTimeout(endAiTurnAfterAction, aiDelay(500));
   }
 }
 
 /* ---------- In-progress game persistence (survives reload / backgrounding) ---------- */
-const GAME_STATE_KEY = 'cabo_game_v1';
+const GAME_STATE_KEY = 'cambio_game_v1';
 function saveGameState(){
-  // Skip while a modal with callback functions is open (those can't survive
-  // JSON round-tripping) and during the tutorial (its scripted state isn't
-  // meant to be resumed) — the next safe render() will save again.
-  if(!game || game.infoModal || game.tutorialActive) return;
+  // Skip while a modal with callback functions is open, or while a shed
+  // prompt's resolve() closure is pending (neither can survive JSON
+  // round-tripping) — the next safe render() will save again.
+  if(!game || game.infoModal || game.pendingShed) return;
   try{ localStorage.setItem(GAME_STATE_KEY, JSON.stringify(game)); }catch(e){ /* storage unavailable */ }
 }
 function loadGameState(){
@@ -967,7 +1025,7 @@ function loadGameState(){
 function clearGameState(){ try{ localStorage.removeItem(GAME_STATE_KEY); }catch(e){ /* storage unavailable */ } }
 function tryResumeGame(){
   const saved = loadGameState();
-  if(!saved || saved.tutorialActive || saved.mode==='game-over') return false;
+  if(!saved || saved.mode==='game-over') return false;
   game = saved;
   document.getElementById('start-screen').style.display = 'none';
   document.getElementById('game-screen').style.display = 'flex';
@@ -1071,7 +1129,7 @@ function showStatsPanel(confirmingReset){
       <div class="stat-tile"><span class="stat-value">${avgRound}</span><span class="stat-label">Avg. round score</span></div>
       <div class="stat-tile"><span class="stat-value">${s.bestRoundScore===null?'\u2014':s.bestRoundScore}</span><span class="stat-label">Best round ever</span></div>
       <div class="stat-tile"><span class="stat-value">${s.bestGameScore===null?'\u2014':s.bestGameScore}</span><span class="stat-label">Best game total</span></div>
-      <div class="stat-tile"><span class="stat-value">${caboRate===null?'\u2014':caboRate+'%'}</span><span class="stat-label">Clean Cabo calls (${s.caboClean}/${s.caboCalls})</span></div>
+      <div class="stat-tile"><span class="stat-value">${caboRate===null?'\u2014':caboRate+'%'}</span><span class="stat-label">Clean Cambio calls (${s.caboClean}/${s.caboCalls})</span></div>
     </div>
     ${renderScoreChart(s.recentGames)}
     <div class="stat-section-title">By difficulty</div>
@@ -1113,19 +1171,22 @@ function endRound(){
   let caboCalledByHuman = false, humanCleanCall = false;
   if(game.caboCallerId!==null){
     const caller = getPlayer(game.caboCallerId);
-    const minScore = Math.min(...game.players.map(pl=>pl.roundScore));
-    const wasLowest = caller.roundScore <= minScore;
-    if(caller.id===HUMAN_ID){ caboCalledByHuman = true; humanCleanCall = wasLowest; }
-    if(!wasLowest){
-      caller.roundScore += 10;
-      logMsg(`${caller.name} didn't have the lowest score — +10 penalty!`);
+    const rawScore = caller.roundScore;
+    const others = game.players.filter(pl=>pl.id!==caller.id);
+    const strictlyLowest = others.every(pl=>rawScore < pl.roundScore);
+    if(caller.id===HUMAN_ID) caboCalledByHuman = true;
+    if(strictlyLowest){
+      caller.roundScore = Math.min(0, rawScore);
+      if(caller.id===HUMAN_ID) humanCleanCall = true;
+      logMsg(`${caller.name} called it and had the strictly lowest hand — scores ${caller.roundScore}.`);
+    } else {
+      caller.roundScore = rawScore + 10;
+      logMsg(`${caller.name} didn't have the strictly lowest score — +10 penalty (now ${caller.roundScore}).`);
       if(caller.id===HUMAN_ID) hapticPulse([30,60,30,60,30]);
     }
   }
   for(const p of game.players) p.totalScore += p.roundScore;
-  if(!game.tutorialActive){
-    recordRoundStats(getPlayer(HUMAN_ID).roundScore, caboCalledByHuman, humanCleanCall);
-  }
+  recordRoundStats(getPlayer(HUMAN_ID).roundScore, caboCalledByHuman, humanCleanCall);
   logMsg('Round over. Cards revealed.');
   render();
 }
@@ -1133,7 +1194,7 @@ function nextRound(){
   const maxTotal = Math.max(...game.players.map(p=>p.totalScore));
   if(maxTotal>=100){
     game.mode='game-over';
-    if(!game.tutorialActive) recordGameOverStats();
+    recordGameOverStats();
     render();
     return;
   }
@@ -1154,7 +1215,7 @@ function showInfoModalWithChoice(title, body, onYes, onNo, opts){
   render();
 }
 function confirmExitGame(){
-  if(!game || game.tutorialActive) return;
+  if(!game) return;
   showInfoModalWithChoice(
     'Leave this game?',
     "You'll lose your progress in this round. Anything already recorded in Your Stats stays as it is.",
@@ -1166,38 +1227,38 @@ function confirmExitGame(){
 
 /* ---------- Rendering ---------- */
 function renderCardFace(card){
+  if(card.rank==='JOKER'){
+    return `<div class="card-face suit-joker">
+      <span class="card-rank">JKR</span>
+      <span class="card-suit">🃏</span>
+      <span class="card-rank card-rank-br">JKR</span>
+    </div>`;
+  }
   return `<div class="card-face suit-${isRed(card.suit)?'red':'black'}">
     <span class="card-rank">${card.rank}</span>
     <span class="card-suit">${SUIT_SYMBOL[card.suit]}</span>
     <span class="card-rank card-rank-br">${card.rank}</span>
   </div>`;
 }
-function tutorialHighlighted(matchFn){
-  if(!game.tutorialActive || !game.tutorialHighlight) return false;
-  return matchFn(game.tutorialHighlight);
-}
 let animatedSlots = [];
 function renderSlot(playerId, slotIdx, card){
+  if(card.removed){
+    return `<button class="slot" data-player="${playerId}" data-slot="${slotIdx}" disabled>
+      <div class="card-back empty"></div>
+    </button>`;
+  }
   const faceUp = card.publicKnown;
-  const selectable = game.mode==='awaiting-target' && isSelectable(playerId, slotIdx);
-  // Mid-action follow-up tap (King's swap target, or the second half of a
-  // blind swap): the tutorial's per-step highlight is static and would keep
-  // glowing every card in the seat, including the one just picked that's now
-  // excluded — making it look tappable when it silently does nothing. Once
-  // we're in one of these two-tap phases, glow exactly what's still
-  // selectable instead of the static step highlight.
-  const followUpTypes = ['king-swap-target','blindswap-2'];
-  const glow = (game.tutorialActive && game.pendingAction && followUpTypes.includes(game.pendingAction.type))
-    ? selectable
-    : tutorialHighlighted(h => (h.type==='slot' && h.player===playerId && h.slot===slotIdx) || (h.type==='seat' && h.player===playerId));
+  const shedSelectable = game.mode==='shed-opportunity' && playerId===HUMAN_ID;
+  const targetSelectable = game.mode==='awaiting-target' && isSelectable(playerId, slotIdx);
+  const selectable = shedSelectable || targetSelectable;
   const changed = animatedSlots.some(c=>c.player===playerId && c.slot===slotIdx);
-  return `<button class="slot ${selectable?'selectable':''} ${glow?'tutorial-glow':''} ${changed?'card-changed':''}" data-player="${playerId}" data-slot="${slotIdx}" ${selectable?'':'disabled'}>
+  return `<button class="slot ${selectable?'selectable':''} ${changed?'card-changed':''}" data-player="${playerId}" data-slot="${slotIdx}" ${selectable?'':'disabled'}>
     ${faceUp ? renderCardFace(card) : '<div class="card-back"></div>'}
   </button>`;
 }
 function renderGrid(player){
   let html = '<div class="grid">';
-  for(let i=0;i<4;i++) html += renderSlot(player.id, i, player.slots[i]);
+  for(let i=0;i<player.slots.length;i++) html += renderSlot(player.id, i, player.slots[i]);
   html += '</div>';
   return html;
 }
@@ -1208,10 +1269,10 @@ function targetHintText(){
     case 'swap-own': return 'Tap one of your own cards to swap it in.';
     case 'peek-own': return 'Tap one of your own cards to peek at it.';
     case 'peek-opp': return "Tap one of an opponent's cards to peek at it.";
-    case 'blindswap-1': return 'Tap the first card to swap (yours or an opponent\u2019s).';
+    case 'blindswap-1': return 'Tap the first card to swap (yours or an opponent’s).';
     case 'blindswap-2': return 'Now tap the second card to swap with.';
-    case 'king-peek': return 'Tap any card on the table to peek at it.';
-    case 'king-swap-target': return 'Tap a card to swap with the one you peeked at.';
+    case 'queen-peek': return "Tap an opponent's card to peek at it.";
+    case 'queen-swap-target': return 'Tap one of your own cards to swap with the one you peeked at.';
     default: return '';
   }
 }
@@ -1219,43 +1280,36 @@ function render(){
   if(!game) return;
   animatedSlots = game.lastChanged || [];
   game.lastChanged = [];
-  // The tutorial already has its own "Skip tutorial" link — don't duplicate it.
-  document.getElementById('btn-exit').style.display = game.tutorialActive ? 'none' : 'flex';
   const app = document.getElementById('app');
   const opponents = game.players.filter(p=>!p.isHuman);
   const human = getPlayer(HUMAN_ID);
   const inTurn = game.mode!=='round-end' && game.mode!=='game-over' && game.mode!=='peek';
 
   let html = '';
-  html += `<div class="scoreboard">${game.tutorialActive?'':`<div class="info-chip">${game.difficulty[0].toUpperCase()+game.difficulty.slice(1)}</div>`}${game.players.map(p=>`
+  html += `<div class="scoreboard"><div class="info-chip">${game.difficulty[0].toUpperCase()+game.difficulty.slice(1)}</div>${game.players.map(p=>`
     <div class="score-chip ${inTurn && currentPlayerId()===p.id ? 'active':''}">
       <span class="score-name">${p.name}</span><span class="score-num">${p.totalScore}</span>
     </div>`).join('')}</div>`;
 
   html += `<div class="opponents-row">${opponents.map(p=>`
     <div class="seat">
-      <div class="seat-label">${p.name}${game.caboCallerId===p.id?' <span class="cabo-tag">CABO</span>':''}</div>
+      <div class="seat-label">${p.name}${game.caboCallerId===p.id?' <span class="cabo-tag">CAMBIO</span>':''}</div>
       ${renderGrid(p)}
     </div>`).join('')}</div>`;
 
   const canAct = game.mode==='human-turn';
-  const tutStep = game.tutorialActive ? TUTORIAL_STEPS[game.tutorialStep] : null;
-  const tutRestrict = tutStep && tutStep.restrict ? tutStep.restrict : null;
-  const drawGlow = tutorialHighlighted(h=>h.type==='pile' && h.which==='draw');
-  const discardGlow = tutorialHighlighted(h=>h.type==='pile' && h.which==='discard');
-  const caboGlow = tutorialHighlighted(h=>h.type==='cabo-button');
-  const drawDisabled = !canAct || (tutRestrict && tutRestrict.turnAction && tutRestrict.turnAction!=='deck');
-  const discardDisabled = !canAct || game.discardPile.length===0 || (tutRestrict && tutRestrict.turnAction && tutRestrict.turnAction!=='discard');
-  const caboDisabled = !canAct || game.caboCallerId!==null || (tutRestrict && tutRestrict.turnAction && tutRestrict.turnAction!=='cabo');
+  const drawDisabled = !canAct;
+  const discardDisabled = !canAct || game.discardPile.length===0;
+  const caboDisabled = !canAct || game.caboCallerId!==null;
   html += `<div class="center-row">
     <div class="pile-wrap">
-      <button id="draw-pile" class="pile ${drawGlow?'tutorial-glow':''}" ${drawDisabled?'disabled':''}>
+      <button id="draw-pile" class="pile" ${drawDisabled?'disabled':''}>
         <div class="card-back"></div><span class="pile-count">${game.drawPile.length}</span>
       </button>
       <div class="pile-caption">Draw</div>
     </div>
     <div class="pile-wrap">
-      <button id="discard-pile" class="pile ${discardGlow?'tutorial-glow':''}" ${discardDisabled?'disabled':''}>
+      <button id="discard-pile" class="pile" ${discardDisabled?'disabled':''}>
         ${game.discardPile.length ? renderCardFace(game.discardPile[game.discardPile.length-1]) : '<div class="card-back empty"></div>'}
       </button>
       <div class="pile-caption">Discard</div>
@@ -1263,15 +1317,15 @@ function render(){
   </div>`;
 
   html += `<div class="seat player-seat">
-    <div class="seat-label">You${game.caboCallerId===HUMAN_ID?' <span class="cabo-tag">CABO</span>':''}</div>
+    <div class="seat-label">You${game.caboCallerId===HUMAN_ID?' <span class="cabo-tag">CAMBIO</span>':''}</div>
     ${renderGrid(human)}
   </div>`;
 
   html += `<div class="action-bar">
-    <button id="btn-cabo" class="${caboGlow?'tutorial-glow':''}" ${caboDisabled?'disabled':''}>Call CABO</button>
+    <button id="btn-cabo" ${caboDisabled?'disabled':''}>Call CAMBIO</button>
     <button id="btn-log">Log</button>
     <button id="btn-rules">Rules</button>
-    ${game.tutorialActive ? '' : `<button id="btn-fast" class="${fastForward?'on':''}" title="Speed through AI turn pacing">${fastForward?'Fast ✓':'Fast'}</button>`}
+    <button id="btn-fast" class="${fastForward?'on':''}" title="Speed through AI turn pacing">${fastForward?'Fast ✓':'Fast'}</button>
   </div>`;
 
   app.innerHTML = html;
@@ -1296,12 +1350,14 @@ function attachHandlers(){
   });
 }
 function rulesBody(){
-  return `Values: A=1, 2\u201310 face value, J=11, Q=12, K=13 (King of diamonds=0).<br><br>
+  return `Cambio uses a 54-card deck: standard 52 plus 2 Jokers.<br><br>
+  Values: Joker=−1, King=0 (any suit), Ace=1, 2–8 face value, 9=9, 10=10, J=11, Q=12.<br><br>
   On your turn: draw from the deck or the discard pile.<br>
-  \u2022 From the deck: swap it into your grid, or discard it face-up to use its power.<br>
-  \u2022 From the discard pile: it's already known, so you must swap it into your grid (it stays face-up forever).<br><br>
-  Powers when discarding a drawn card: 7/8 peek your own card &middot; 9/10 peek an opponent's card &middot; J/Q blind-swap any two cards &middot; K (not diamonds) peek any card, then optionally swap it.<br><br>
-  Call CABO instead of drawing when you think you're low. Everyone else gets one last turn, then all cards flip. Lowest total wins the round \u2014 unless you called Cabo and didn't actually have the lowest, which costs you a 10-point penalty. First to 100 total points loses; lowest total overall wins the game.`;
+  • From the deck: swap it into your grid, or discard it face-up to use its power.<br>
+  • From the discard pile: it's already known, so you must swap it into your grid (it stays face-up forever).<br><br>
+  Powers when discarding a drawn card: 9 peek one of your own cards &middot; 10 peek one of an opponent's &middot; J blind-swap one of your cards with one of an opponent's &middot; Q peek one of an opponent's cards, then choose whether to swap it with one of your own.<br><br>
+  Shedding: any time a card lands face-up on the discard pile, you can tap one of your own cards to try to shed a match — even a blind guess. A match empties that slot for good (worth 0). A miss returns the card and costs you a penalty card drawn face-down into your grid.<br><br>
+  Call CAMBIO instead of drawing when you think you're low. Everyone else gets one last turn, then all cards flip. If you had the strictly lowest hand, your score resets to 0 (or stays negative if it already was). If you were tied or beaten, you take your total plus a 10-point penalty. First to 100 total points loses; lowest total overall wins the game.`;
 }
 function renderModals(){
   const root = document.getElementById('modal-root');
@@ -1320,22 +1376,17 @@ function renderModals(){
       <h3>Memorize your cards</h3>
       <p>Take a look at your bottom two cards. You won't get another free peek this round.</p>
       <div class="peek-cards">${renderCardFace(human.slots[2])}${renderCardFace(human.slots[3])}</div>
-      <div class="modal-actions"><button id="peek-confirm">Got it \u2014 flip them down</button></div>
+      <div class="modal-actions"><button id="peek-confirm">Got it — flip them down</button></div>
     </div></div>`;
   } else if(game.mode==='human-drawn'){
     const c = game.pendingCard;
-    const tutStep = game.tutorialActive ? TUTORIAL_STEPS[game.tutorialStep] : null;
-    const r = (tutStep && tutStep.restrict) ? tutStep.restrict.drawnAction : null;
-    const swapDisabled = r && r!=='swap';
-    const powerDisabled = r && r!=='power';
-    const plainDisabled = r && r!=='plain';
     html += `<div class="overlay"><div class="modal">
       <h3>You drew ${cardLabel(c)}</h3>
       <p>Worth ${c.value} point${c.value===1?'':'s'}.${hasPower(c)?' It has a power if you discard it.':''}</p>
       <div class="modal-actions">
-        <button id="drawn-swap" ${swapDisabled?'disabled':''}>Swap into your grid</button>
-        ${hasPower(c)?`<button id="drawn-power" ${powerDisabled?'disabled':''}>Discard &amp; use power</button>`:''}
-        <button id="drawn-discard" class="secondary" ${plainDisabled?'disabled':''}>Just discard</button>
+        <button id="drawn-swap">Swap into your grid</button>
+        ${hasPower(c)?`<button id="drawn-power">Discard &amp; use power</button>`:''}
+        <button id="drawn-discard" class="secondary">Just discard</button>
       </div>
     </div></div>`;
   } else if(game.mode==='round-end'){
@@ -1344,9 +1395,7 @@ function renderModals(){
       <div class="results-list">
       ${game.players.map(p=>`<div class="result-row"><span>${p.name}</span><span class="hand">${p.slots.map(c=>cardLabel(c)).join(' ')}</span><span>${p.roundScore} pts (total ${p.totalScore})</span></div>`).join('')}
       </div>
-      ${game.tutorialActive
-        ? `<p style="margin-top:14px;">That's the whole game! Head back to the menu whenever you're ready to play for real.</p><div class="modal-actions"><button id="tutorial-done">Finish tutorial</button></div>`
-        : `<div class="modal-actions"><button id="next-round">Continue</button></div>`}
+      <div class="modal-actions"><button id="next-round">Continue</button></div>
     </div></div>`;
   } else if(game.mode==='game-over'){
     const sorted = [...game.players].sort((a,b)=>a.totalScore-b.totalScore);
@@ -1358,15 +1407,12 @@ function renderModals(){
       <div class="modal-actions"><button id="play-again">Play again</button></div>
     </div></div>`;
   } else if(game.mode==='awaiting-target'){
-    // The tutorial's per-step text is written for the *first* tap of an
-    // action. King's swap-target and the second half of a blind swap need a
-    // follow-up tap the script doesn't narrate, so surface the normal live
-    // hint banner for those even during the tutorial.
-    const followUpTypes = ['king-swap-target','blindswap-2'];
-    const isFollowUp = game.pendingAction && followUpTypes.includes(game.pendingAction.type);
-    if(!game.tutorialActive || isFollowUp) html += `<div class="hint-banner">${targetHintText()}</div>`;
+    html += `<div class="hint-banner">${targetHintText()}</div>`;
+  } else if(game.mode==='shed-opportunity'){
+    const top = game.discardPile[game.discardPile.length-1];
+    html += `<div class="hint-banner"><div class="hint-banner-actions"><span>${cardLabel(top)} is on top — tap one of your cards to try a shed, or pass.</span><button id="shed-pass">Pass</button></div></div>`;
   } else if(game.mode==='ai-turn'){
-    html += `<div class="hint-banner">${getPlayer(currentPlayerId()).name} is thinking\u2026</div>`;
+    html += `<div class="hint-banner">${getPlayer(currentPlayerId()).name} is thinking…</div>`;
   }
   if(game.showLog){
     html += `<div class="overlay"><div class="modal wide">
@@ -1375,51 +1421,10 @@ function renderModals(){
       <div class="modal-actions"><button id="log-close">Close</button></div>
     </div></div>`;
   }
-  html += renderTutorialBar();
   root.innerHTML = html;
   wireModalHandlers();
-  reserveTutorialBarSpace();
-}
-// The tutorial bar is a fixed-position overlay (rendered into #modal-root, a
-// sibling of #game-screen) so it doesn't naturally push board content out of
-// its way. Without this, its height varies with the step's text length (1 vs.
-// 2 wrapped lines) and can end up covering — and blocking taps on — the
-// action bar underneath it, including the Call CABO button.
-function reserveTutorialBarSpace(){
-  const gameScreen = document.getElementById('game-screen');
-  const bar = document.querySelector('.tutorial-bar');
-  gameScreen.style.paddingBottom = bar ? `calc(env(safe-area-inset-bottom) + 10px + ${bar.offsetHeight}px)` : '';
-  if(!bar) return;
-  // Belt-and-suspenders: on a viewport short enough that the padding above
-  // still isn't enough room, make sure whatever this step is pointing at is
-  // actually scrolled into view.
-  const h = game.tutorialActive ? game.tutorialHighlight : null;
-  if(!h) return;
-  let target = null;
-  if(h.type==='cabo-button') target = document.getElementById('btn-cabo');
-  else if(h.type==='pile') target = document.getElementById(h.which==='draw' ? 'draw-pile' : 'discard-pile');
-  else if(h.type==='slot') target = document.querySelector(`.slot[data-player="${h.player}"][data-slot="${h.slot}"]`);
-  else if(h.type==='seat') target = document.querySelector(`.slot[data-player="${h.player}"]`);
-  if(target) target.scrollIntoView({ block:'nearest' });
-}
-function renderTutorialBar(){
-  if(!game.tutorialActive) return '';
-  if(game.mode==='peek' || game.mode==='round-end' || game.mode==='game-over') return '';
-  const step = TUTORIAL_STEPS[game.tutorialStep];
-  if(!step) return '';
-  return `<div class="tutorial-bar">
-    <div class="tutorial-top">
-      <span class="tutorial-count">Step ${game.tutorialStep+1} of ${TUTORIAL_STEPS.length}</span>
-      <button id="tutorial-skip" class="tutorial-skip">Skip tutorial</button>
-    </div>
-    <div class="tutorial-text">${step.msg}</div>
-    ${step.type==='info' ? `<button id="tutorial-next" class="tutorial-next-btn">Next</button>` : `<div class="tutorial-waiting">\u2192 go ahead, try it on the board above</div>`}
-  </div>`;
 }
 function wireModalHandlers(){
-  const tutNext = document.getElementById('tutorial-next'); if(tutNext) tutNext.onclick = tutorialNext;
-  const tutSkip = document.getElementById('tutorial-skip'); if(tutSkip) tutSkip.onclick = tutorialSkip;
-  const tutDone = document.getElementById('tutorial-done'); if(tutDone) tutDone.onclick = tutorialFinish;
   const m = game.infoModal;
   if(m){
     // Closing a modal is a DOM change, not just a state change — always
@@ -1436,12 +1441,13 @@ function wireModalHandlers(){
     return;
   }
   const peekBtn = document.getElementById('peek-confirm'); if(peekBtn) peekBtn.onclick = beginTurn;
-  const drawnSwap = document.getElementById('drawn-swap'); if(drawnSwap) drawnSwap.onclick = ()=>{ game.pendingAction={type:'swap-own'}; game.mode='awaiting-target'; render(); };
+  const drawnSwap = document.getElementById('drawn-swap'); if(drawnSwap) drawnSwap.onclick = beginSwapOwn;
   const drawnPower = document.getElementById('drawn-power'); if(drawnPower) drawnPower.onclick = discardPendingForPower;
   const drawnDiscard = document.getElementById('drawn-discard'); if(drawnDiscard) drawnDiscard.onclick = discardPendingNoEffect;
   const nextRoundBtn = document.getElementById('next-round'); if(nextRoundBtn) nextRoundBtn.onclick = nextRound;
   const playAgainBtn = document.getElementById('play-again'); if(playAgainBtn) playAgainBtn.onclick = showStartScreen;
   const logClose = document.getElementById('log-close'); if(logClose) logClose.onclick = ()=>{ game.showLog=false; render(); };
+  const shedPass = document.getElementById('shed-pass'); if(shedPass) shedPass.onclick = handleHumanShedPass;
 }
 
 /* ---------- Start screen ---------- */
@@ -1456,8 +1462,8 @@ function showStartScreen(){
   document.getElementById('modal-root').innerHTML = '';
 }
 const DIFFICULTY_BLURBS = {
-  easy: 'Forgets cards it has peeked at, and calls CABO on a hunch \u2014 sometimes way too early, sometimes way too late.',
-  normal: 'Solid, straightforward play \u2014 a fair fight.',
+  easy: 'Forgets cards it has peeked at, and calls CAMBIO on a hunch — sometimes way too early, sometimes way too late.',
+  normal: 'Solid, straightforward play — a fair fight.',
   hard: 'Near-perfect memory, calculates the exact odds of every unseen card, and targets your weak spots with blind swaps.'
 };
 function wireStartScreen(){
@@ -1479,24 +1485,19 @@ function wireStartScreen(){
     });
   });
   document.getElementById('rules-panel').innerHTML = `
-    <h4>Setup</h4><p>Each player gets 4 face-down cards. You peek at your bottom two once at the start of each round.</p>
-    <h4>Values</h4><p>A=1, 2\u201310 face value, J=11, Q=12, K=13 (King of diamonds is a lucky 0).</p>
-    <h4>Your turn</h4><p>Draw from the deck (swap it in, or discard it to use its power) or take the discard pile's top card (must swap it in \u2014 it's already known, and stays face-up forever).</p>
-    <h4>Powers</h4><p>7/8 peek your own card &middot; 9/10 peek an opponent's &middot; J/Q blind-swap any two cards &middot; K (not diamonds) peek any card, then optionally swap it.</p>
-    <h4>Ending a round</h4><p>Call CABO when you think you're lowest. Everyone else gets one last turn, then hands are revealed. If you called and weren't actually lowest, you take a 10-point penalty.</p>
+    <h4>Setup</h4><p>54-card deck (52 standard + 2 Jokers). Each player gets 4 face-down cards. You peek at your bottom two once at the start of each round.</p>
+    <h4>Values</h4><p>Joker=−1, King=0 (any suit), Ace=1, 2–8 face value, 9=9, 10=10, J=11, Q=12.</p>
+    <h4>Your turn</h4><p>Draw from the deck (swap it in, or discard it to use its power) or take the discard pile's top card (must swap it in — it's already known, and stays face-up forever).</p>
+    <h4>Powers</h4><p>9 peek your own card &middot; 10 peek an opponent's &middot; J blind-swap one of your cards with an opponent's &middot; Q peek an opponent's card, then choose whether to swap it with one of your own.</p>
+    <h4>Shedding</h4><p>Whenever a card lands face-up on the discard pile, anyone can try shedding a matching card from their own grid — blind guesses allowed. A match empties that slot (worth 0 forever). A miss returns the card and adds a penalty card to your grid.</p>
+    <h4>Ending a round</h4><p>Call CAMBIO when you think you're lowest. Everyone else gets one last turn, then hands are revealed. A clean call (strictly lowest) resets your score to 0 or better; a failed call adds a 10-point penalty to your actual total.</p>
     <h4>Winning</h4><p>Play rounds until someone reaches 100 points. Lowest total wins.</p>
-    <h4>Difficulty</h4><p><b>Easy</b> \u2014 ${DIFFICULTY_BLURBS.easy}</p><p><b>Normal</b> \u2014 ${DIFFICULTY_BLURBS.normal}</p><p><b>Hard</b> \u2014 ${DIFFICULTY_BLURBS.hard}</p>
-    <p style="opacity:.7; font-size:.85rem; margin-top:10px;">Note: this version skips the real-time "quick discard" house rule, since it needs live opponents.</p>
+    <h4>Difficulty</h4><p><b>Easy</b> — ${DIFFICULTY_BLURBS.easy}</p><p><b>Normal</b> — ${DIFFICULTY_BLURBS.normal}</p><p><b>Hard</b> — ${DIFFICULTY_BLURBS.hard}</p>
   `;
   document.getElementById('start-btn').addEventListener('click', ()=>{
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('game-screen').style.display = 'flex';
     newGame(chosen, chosenDifficulty);
-  });
-  document.getElementById('tutorial-btn').addEventListener('click', ()=>{
-    document.getElementById('start-screen').style.display = 'none';
-    document.getElementById('game-screen').style.display = 'flex';
-    startTutorial();
   });
   document.getElementById('start-rules-btn').addEventListener('click', ()=>{
     document.getElementById('rules-panel').classList.toggle('open');

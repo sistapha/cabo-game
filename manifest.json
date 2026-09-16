@@ -1,6 +1,6 @@
 {
-  "name": "Cabo",
-  "short_name": "Cabo",
+  "name": "Cambio",
+  "short_name": "Cambio",
   "description": "Memory, bluffing, and just enough cruelty. Play solo against the computer.",
   "start_url": "./index.html",
   "scope": "./",
