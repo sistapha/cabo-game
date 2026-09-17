@@ -405,6 +405,7 @@ function newGame(numAI, difficulty){
 function startRound(){
   if(toastTimer){ clearTimeout(toastTimer); toastTimer=null; }
   activeToast = null;
+  if(shedTimer){ clearTimeout(shedTimer); shedTimer=null; }
   const deck = shuffle(buildDeck());
   for(const p of game.players){
     p.slots = [deck.pop(), deck.pop(), deck.pop(), deck.pop()];
@@ -540,16 +541,36 @@ function runShedChain(onAllDone){
     onAllDone();
   });
 }
+// How long the shed window stays open before it auto-passes on its own —
+// a real shed opportunity doesn't wait for you to notice it.
+let shedTimer = null;
 function offerHumanShed(next){
   if(game.discardPile.length===0){ next(false); return; }
+  const top = game.discardPile[game.discardPile.length-1];
+  const human = getPlayer(HUMAN_ID);
+  // Skip the prompt entirely when it's plainly pointless: every live card is
+  // already face-up and none of them match, so there's zero chance of a
+  // shed and interrupting play to say so would just be noise. A face-down
+  // card always keeps the window open, since a blind guess is still legal.
+  const worthOffering = human.slots.some(c=>!c.removed && (!c.publicKnown || c.value===top.value));
+  if(!worthOffering){ next(false); return; }
   game.mode = 'shed-opportunity';
   game.pendingShed = { resolve: next };
   render();
+  if(shedTimer) clearTimeout(shedTimer);
+  shedTimer = setTimeout(()=>{
+    shedTimer = null;
+    if(!game || game.mode!=='shed-opportunity' || !game.pendingShed) return;
+    const resolve = game.pendingShed.resolve;
+    game.pendingShed = null;
+    resolve(false);
+  }, aiDelay(3200));
 }
 function handleHumanShedAttempt(slotIdx){
   const p = getPlayer(HUMAN_ID);
   const card = p.slots[slotIdx];
   if(!card || card.removed || !game.pendingShed) return;
+  if(shedTimer){ clearTimeout(shedTimer); shedTimer=null; }
   const top = game.discardPile[game.discardPile.length-1];
   const resolve = game.pendingShed.resolve;
   game.pendingShed = null;
@@ -573,6 +594,7 @@ function handleHumanShedAttempt(slotIdx){
 }
 function handleHumanShedPass(){
   if(game.mode!=='shed-opportunity' || !game.pendingShed) return;
+  if(shedTimer){ clearTimeout(shedTimer); shedTimer=null; }
   const resolve = game.pendingShed.resolve;
   game.pendingShed = null;
   resolve(false);
@@ -1072,8 +1094,32 @@ function aiUsePower(p, pt){
       liveSlots.push(i);
       if(knownValue(p, target.id, i)===null) unknownSlots.push(i);
     }
-    const slot = unknownSlots.length ? unknownSlots[Math.floor(Math.random()*unknownSlots.length)]
-               : liveSlots[Math.floor(Math.random()*liveSlots.length)];
+    const worst = aiWorstKnownSlot(p);
+    const worstVal = worst ? worst.value : unseenEstimateFor(p);
+    const ownSlot = worst ? worst.slot : (aiRandomUnknownSlot(p) ?? aiAnySlot(p));
+
+    if(!unknownSlots.length){
+      // Every one of this target's live cards is already known (public or
+      // memorized) — there's nothing left to learn, so don't spend the
+      // power pretending to "peek" at it. Either take the best already-known
+      // card outright, or don't use the power at all.
+      let bestSlot=null, bestVal=Infinity;
+      for(const i of liveSlots){
+        const v = knownValue(p, target.id, i);
+        if(v<bestVal){ bestVal=v; bestSlot=i; }
+      }
+      if(bestSlot!==null && bestVal < worstVal - 0.5 && ownSlot!==-1){
+        doPeekedSwap(p, {player:target.id, slot:bestSlot}, {player:p.id, slot:ownSlot});
+        logMsg(`${p.name} used the Queen's power to swap in ${target.isHuman?'your':target.name+"'s"} already-known card.`);
+        if(target.isHuman) showToast(`${p.name} used the Queen's power to swap out your ${slotLabel(bestSlot)} card.`);
+      } else {
+        logMsg(`${p.name} discarded the Queen without using its power — nothing worth targeting.`);
+      }
+      setTimeout(endAiTurnAfterAction, aiDelay(800));
+      return;
+    }
+
+    const slot = unknownSlots[Math.floor(Math.random()*unknownSlots.length)];
     const seenCard = target.slots[slot];
     const seenValue = seenCard.value;
     if(!p.memory.opp[target.id]) p.memory.opp[target.id] = target.slots.map(()=>null);
@@ -1084,10 +1130,7 @@ function aiUsePower(p, pt){
     // the first before it's readable.
     const peekMsg = `${p.name} used the Queen's power to peek at your ${slotLabel(slot)} card.`;
 
-    const worst = aiWorstKnownSlot(p);
-    const worstVal = worst ? worst.value : unseenEstimateFor(p);
     const shouldSwap = seenValue < worstVal - 0.5;
-    const ownSlot = worst ? worst.slot : (aiRandomUnknownSlot(p) ?? aiAnySlot(p));
     if(shouldSwap && ownSlot!==-1){
       doPeekedSwap(p, {player:target.id, slot}, {player:p.id, slot:ownSlot});
       logMsg(`${p.name} swapped it in for one of their own.`);
@@ -1522,7 +1565,7 @@ function renderModals(){
     html += `<div class="hint-banner">${targetHintText()}</div>`;
   } else if(game.mode==='shed-opportunity'){
     const top = game.discardPile[game.discardPile.length-1];
-    html += `<div class="hint-banner"><div class="hint-banner-actions"><span>${cardLabel(top)} is on top — tap one of your cards to try a shed, or pass.</span><button id="shed-pass">Pass</button></div></div>`;
+    html += `<div class="hint-banner"><div class="hint-banner-actions"><span>${cardLabel(top)} is on top — tap a card to try a shed, or it'll move on in a moment.</span><button id="shed-pass">Pass</button></div></div>`;
   } else if(game.mode==='ai-turn'){
     html += `<div class="hint-banner">${getPlayer(currentPlayerId()).name} is thinking…</div>`;
   }
