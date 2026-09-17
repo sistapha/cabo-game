@@ -316,9 +316,12 @@ function showToast(msg){
   activeToast = { id: ++toastCounter, msg };
   if(toastTimer) clearTimeout(toastTimer);
   const id = activeToast.id;
+  // Scales with message length (these can now spell out a full card and
+  // value) so a longer reveal doesn't vanish before it's readable.
+  const duration = fastForward ? 1500 : Math.min(6500, 2800 + msg.length*35);
   toastTimer = setTimeout(()=>{
     if(activeToast && activeToast.id===id){ activeToast = null; render(); }
-  }, fastForward ? 1400 : 3200);
+  }, duration);
   render();
 }
 
@@ -365,6 +368,12 @@ function cardLabel(card){
   return `${card.rank}${SUIT_SYMBOL[card.suit]}`;
 }
 function isRed(suit){ return suit==='H' || suit==='D'; }
+// The grid has no visible slot numbers, so describe a position the way you'd
+// actually see it on screen (a 2-column grid: 0/1 top row, 2/3 bottom row).
+function slotLabel(idx){
+  const names = ['top-left','top-right','bottom-left','bottom-right'];
+  return names[idx] || `card #${idx+1}`;
+}
 
 /* ---------- Game setup ---------- */
 function newGame(numAI, difficulty){
@@ -998,7 +1007,10 @@ function aiUsePower(p, pt){
                : liveSlots[Math.floor(Math.random()*liveSlots.length)];
     p.memory.opp[target.id][slot] = target.slots[slot].value;
     logMsg(`${p.name} peeked at one of ${target.isHuman ? 'your' : target.name+"'s"} cards.`);
-    if(target.isHuman) showToast(`${p.name} peeked at one of your cards.`);
+    if(target.isHuman){
+      const seen = target.slots[slot];
+      showToast(`${p.name} peeked at your ${slotLabel(slot)} card: ${cardLabel(seen)} (${seen.value} pt${seen.value===1?'':'s'}).`);
+    }
     setTimeout(endAiTurnAfterAction, aiDelay(700));
   } else if(pt==='blind-swap'){
     const worst = aiWorstKnownSlot(p);
@@ -1037,7 +1049,9 @@ function aiUsePower(p, pt){
       if(target && tSlot!==-1){
         doBlindSwap({player:p.id, slot:worst.slot}, {player:target.id, slot:tSlot});
         logMsg(`${p.name} blind-swapped one of their cards with ${target.isHuman ? 'yours' : target.name+"'s"}.`);
-        if(target.isHuman) showToast(`${p.name} blind-swapped one of their cards with one of yours.`);
+        // Nobody — not even ${p.name} — knows what card landed here; that's
+        // what makes it a *blind* swap, so only the position is revealed.
+        if(target.isHuman) showToast(`${p.name} blind-swapped a card into your ${slotLabel(tSlot)} slot — nobody knows what it is yet.`);
       } else {
         logMsg(`${p.name} had no one to swap with.`);
       }
@@ -1061,22 +1075,33 @@ function aiUsePower(p, pt){
     }
     const slot = unknownSlots.length ? unknownSlots[Math.floor(Math.random()*unknownSlots.length)]
                : liveSlots[Math.floor(Math.random()*liveSlots.length)];
-    const seenValue = target.slots[slot].value;
+    const seenCard = target.slots[slot];
+    const seenValue = seenCard.value;
     if(!p.memory.opp[target.id]) p.memory.opp[target.id] = target.slots.map(()=>null);
     p.memory.opp[target.id][slot] = seenValue;
     logMsg(`${p.name} used the Queen's power to peek at ${target.isHuman?'your':target.name+"'s"} card.`);
-    if(target.isHuman) showToast(`${p.name} used the Queen's power to peek at one of your cards.`);
+    // Built up and shown as ONE toast below (never two in a row) — a second
+    // showToast() would silently cut off the first before it's readable.
+    const peekMsg = `${p.name} used the Queen's power to peek at your ${slotLabel(slot)} card: ${cardLabel(seenCard)} (${seenValue} pt${seenValue===1?'':'s'}).`;
 
     const worst = aiWorstKnownSlot(p);
     const worstVal = worst ? worst.value : unseenEstimateFor(p);
     const shouldSwap = seenValue < worstVal - 0.5;
     const ownSlot = worst ? worst.slot : (aiRandomUnknownSlot(p) ?? aiAnySlot(p));
+    // Only known when `worst` is set — otherwise the AI itself doesn't know
+    // this card's value, so it stays hidden from you too (same as a blind swap).
+    const givenCard = worst ? p.slots[ownSlot] : null;
     if(shouldSwap && ownSlot!==-1){
       doPeekedSwap(p, {player:target.id, slot}, {player:p.id, slot:ownSlot});
       logMsg(`${p.name} swapped it in for one of their own.`);
-      if(target.isHuman) showToast(`${p.name} swapped one of your cards into their own grid.`);
+      if(target.isHuman){
+        showToast(peekMsg + (givenCard
+          ? ` They swapped it for their ${cardLabel(givenCard)} (${givenCard.value} pt${givenCard.value===1?'':'s'}).`
+          : ` They swapped it for a card even they haven't seen.`));
+      }
     } else {
       logMsg(`${p.name} chose not to swap.`);
+      if(target.isHuman) showToast(peekMsg);
     }
     setTimeout(endAiTurnAfterAction, aiDelay(900));
   } else {
