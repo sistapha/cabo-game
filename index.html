@@ -590,8 +590,7 @@ function runAiShedChecks(){
   return false;
 }
 function aiWillAttemptShed(p){
-  if(p.difficulty==='hard') return true;
-  if(p.difficulty==='easy') return Math.random()<0.7;
+  if(p.difficulty==='hard' || p.difficulty==='normal') return true;
   return Math.random()<0.85;
 }
 // Places a card into a player's grid, reusing an already-shed (removed) slot
@@ -814,19 +813,22 @@ function computeRemainingAverage(p){
   return count>0 ? total/count : UNSEEN_AVG;
 }
 function unseenEstimateFor(p){
-  return p.difficulty==='hard' ? computeRemainingAverage(p) : UNSEEN_AVG;
+  return (p.difficulty==='hard' || p.difficulty==='normal') ? computeRemainingAverage(p) : UNSEEN_AVG;
 }
 function caboThreshold(p){
-  if(p.difficulty==='easy') return 1.7 + Math.random()*11;
   if(p.difficulty==='hard'){
+    const frac = game.initialDrawPileSize>0 ? (game.drawPile.length/game.initialDrawPileSize) : 0;
+    return 2.6 + 1.6*frac;
+  }
+  if(p.difficulty==='normal'){
     const frac = game.initialDrawPileSize>0 ? (game.drawPile.length/game.initialDrawPileSize) : 0;
     return 3.8 + 2.1*frac;
   }
   return p.riskiness;
 }
 function discardPickupThreshold(p){
-  if(p.difficulty==='easy') return 0;
-  if(p.difficulty==='hard') return 4;
+  if(p.difficulty==='hard') return 5;
+  if(p.difficulty==='normal') return 4;
   return 3;
 }
 function aiEstimateScore(p){
@@ -837,6 +839,31 @@ function aiEstimateScore(p){
     total += (p.memory.own[i]!==null ? p.memory.own[i] : u);
   }
   return total;
+}
+// Same estimate, but of another player's hand as seen through p's own
+// knowledge (public-known cards plus whatever p has personally spied on) —
+// lets the Hard tier judge who's actually in the lead, not just its own hand.
+function estimateOpponentScore(p, target){
+  const u = unseenEstimateFor(p);
+  let total = 0;
+  for(let i=0;i<target.slots.length;i++){
+    if(target.slots[i].removed) continue;
+    const v = knownValue(p, target.id, i);
+    total += (v!==null ? v : u);
+  }
+  return total;
+}
+// Hard picks whoever currently looks like the biggest threat (lowest
+// estimated score) to spy on or swap with; every other tier picks randomly,
+// same as before.
+function chooseAiTarget(p, others){
+  if(p.difficulty!=='hard') return others[Math.floor(Math.random()*others.length)];
+  let best=null, bestScore=Infinity;
+  for(const o of others){
+    const s = estimateOpponentScore(p, o);
+    if(s<bestScore){ bestScore=s; best=o; }
+  }
+  return best;
 }
 function aiWorstKnownSlot(p){
   let bestIdx=-1, bestVal=-Infinity;
@@ -859,18 +886,18 @@ function aiAnySlot(p){
   return -1;
 }
 function runAiTurn(p){
-  if(p.difficulty==='easy' && Math.random()<0.15){
-    const known = [];
-    for(let i=0;i<p.slots.length;i++) if(!p.slots[i].removed && p.memory.own[i]!==null) known.push(i);
-    if(known.length){
-      const idx = known[Math.floor(Math.random()*known.length)];
-      p.memory.own[idx] = null;
-      logMsg(`${p.name} seems to have lost track of one of their cards.`);
-    }
-  }
   if(game.caboCallerId===null){
     const est = aiEstimateScore(p);
-    if(est <= caboThreshold(p)){
+    // Hard doesn't just check its own hand against an absolute bar — it also
+    // checks whether it actually looks ahead of the best rival it has any
+    // read on, so it won't call CAMBIO into a fight it doesn't know it's winning.
+    let readyToCall = est <= caboThreshold(p);
+    if(readyToCall && p.difficulty==='hard'){
+      const rivals = game.players.filter(pl=>pl.id!==p.id && pl.slots.some(c=>!c.removed));
+      const bestRival = rivals.length ? Math.min(...rivals.map(o=>estimateOpponentScore(p,o))) : Infinity;
+      readyToCall = est < bestRival - 1;
+    }
+    if(readyToCall){
       logMsg(`${p.name} calls CAMBIO!`);
       callCabo(p.id);
       return;
@@ -960,7 +987,7 @@ function aiUsePower(p, pt){
       setTimeout(endAiTurnAfterAction, aiDelay(700));
       return;
     }
-    const target = others[Math.floor(Math.random()*others.length)];
+    const target = chooseAiTarget(p, others);
     const unknownSlots = [], liveSlots = [];
     for(let i=0;i<target.slots.length;i++){
       if(target.slots[i].removed) continue;
@@ -978,6 +1005,18 @@ function aiUsePower(p, pt){
     if(worst && worst.value>=8){
       let target=null, tSlot=null;
       if(p.difficulty==='hard'){
+        // Scans every known low card rather than stopping at the first one,
+        // so it swaps away for the single best card it has a read on.
+        let bestV = Infinity;
+        for(const other of game.players){
+          if(other.id===p.id) continue;
+          for(let i=0;i<other.slots.length;i++){
+            if(other.slots[i].removed) continue;
+            const v = knownValue(p, other.id, i);
+            if(v!==null && v<=3 && v<bestV){ bestV=v; target=other; tSlot=i; }
+          }
+        }
+      } else if(p.difficulty==='normal'){
         outer:
         for(const other of game.players){
           if(other.id===p.id) continue;
@@ -991,7 +1030,7 @@ function aiUsePower(p, pt){
       if(!target){
         const others = playersWithLiveSlots(game.players.filter(pl=>pl.id!==p.id));
         if(others.length){
-          target = others[Math.floor(Math.random()*others.length)];
+          target = chooseAiTarget(p, others);
           tSlot = aiAnySlot(target);
         }
       }
@@ -1013,7 +1052,7 @@ function aiUsePower(p, pt){
       setTimeout(endAiTurnAfterAction, aiDelay(900));
       return;
     }
-    const target = others[Math.floor(Math.random()*others.length)];
+    const target = chooseAiTarget(p, others);
     const unknownSlots = [], liveSlots = [];
     for(let i=0;i<target.slots.length;i++){
       if(target.slots[i].removed) continue;
@@ -1517,9 +1556,9 @@ function showStartScreen(){
   document.getElementById('modal-root').innerHTML = '';
 }
 const DIFFICULTY_BLURBS = {
-  easy: 'Forgets cards it has peeked at, and calls CAMBIO on a hunch — sometimes way too early, sometimes way too late.',
-  normal: 'Solid, straightforward play — a fair fight.',
-  hard: 'Near-perfect memory, calculates the exact odds of every unseen card, and targets your weak spots with blind swaps.'
+  easy: 'Solid, straightforward play — a fair fight.',
+  normal: 'Near-perfect memory, calculates the exact odds of every unseen card, and hunts for known low cards to blind-swap away.',
+  hard: 'Everything Normal does, plus it tracks who actually looks like the leader and focuses its spying and swaps on them — and it only calls CAMBIO when it believes it’s truly ahead, not just below a fixed score.'
 };
 function wireStartScreen(){
   let chosen = 2;
