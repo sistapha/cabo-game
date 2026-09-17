@@ -1007,10 +1007,9 @@ function aiUsePower(p, pt){
                : liveSlots[Math.floor(Math.random()*liveSlots.length)];
     p.memory.opp[target.id][slot] = target.slots[slot].value;
     logMsg(`${p.name} peeked at one of ${target.isHuman ? 'your' : target.name+"'s"} cards.`);
-    if(target.isHuman){
-      const seen = target.slots[slot];
-      showToast(`${p.name} peeked at your ${slotLabel(slot)} card: ${cardLabel(seen)} (${seen.value} pt${seen.value===1?'':'s'}).`);
-    }
+    // Position only — the card's value stays hidden from you, same as it
+    // would if you hadn't peeked at it yourself.
+    if(target.isHuman) showToast(`${p.name} peeked at your ${slotLabel(slot)} card.`);
     setTimeout(endAiTurnAfterAction, aiDelay(700));
   } else if(pt==='blind-swap'){
     const worst = aiWorstKnownSlot(p);
@@ -1080,25 +1079,19 @@ function aiUsePower(p, pt){
     if(!p.memory.opp[target.id]) p.memory.opp[target.id] = target.slots.map(()=>null);
     p.memory.opp[target.id][slot] = seenValue;
     logMsg(`${p.name} used the Queen's power to peek at ${target.isHuman?'your':target.name+"'s"} card.`);
-    // Built up and shown as ONE toast below (never two in a row) — a second
-    // showToast() would silently cut off the first before it's readable.
-    const peekMsg = `${p.name} used the Queen's power to peek at your ${slotLabel(slot)} card: ${cardLabel(seenCard)} (${seenValue} pt${seenValue===1?'':'s'}).`;
+    // Position only, never the value — built up and shown as ONE toast below
+    // (never two in a row) since a second showToast() would silently cut off
+    // the first before it's readable.
+    const peekMsg = `${p.name} used the Queen's power to peek at your ${slotLabel(slot)} card.`;
 
     const worst = aiWorstKnownSlot(p);
     const worstVal = worst ? worst.value : unseenEstimateFor(p);
     const shouldSwap = seenValue < worstVal - 0.5;
     const ownSlot = worst ? worst.slot : (aiRandomUnknownSlot(p) ?? aiAnySlot(p));
-    // Only known when `worst` is set — otherwise the AI itself doesn't know
-    // this card's value, so it stays hidden from you too (same as a blind swap).
-    const givenCard = worst ? p.slots[ownSlot] : null;
     if(shouldSwap && ownSlot!==-1){
       doPeekedSwap(p, {player:target.id, slot}, {player:p.id, slot:ownSlot});
       logMsg(`${p.name} swapped it in for one of their own.`);
-      if(target.isHuman){
-        showToast(peekMsg + (givenCard
-          ? ` They swapped it for their ${cardLabel(givenCard)} (${givenCard.value} pt${givenCard.value===1?'':'s'}).`
-          : ` They swapped it for a card even they haven't seen.`));
-      }
+      if(target.isHuman) showToast(`${peekMsg} They swapped it into their own grid.`);
     } else {
       logMsg(`${p.name} chose not to swap.`);
       if(target.isHuman) showToast(peekMsg);
