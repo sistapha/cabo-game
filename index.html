@@ -1621,14 +1621,38 @@ const DIFFICULTY_BLURBS = {
   normal: 'Near-perfect memory, calculates the exact odds of every unseen card, and hunts for known low cards to blind-swap away.',
   hard: 'Everything Normal does. It remembers everything, watches its strongest opponent like a hawk, and comes for them. By the time it calls CAMBIO, the round is already over — it’s just waiting for you to notice.'
 };
+const SETUP_PREFS_KEY = 'cambio_setup_prefs_v1';
+function loadSetupPrefs(){
+  try{
+    const raw = localStorage.getItem(SETUP_PREFS_KEY);
+    if(!raw) return null;
+    const p = JSON.parse(raw);
+    if(![1,2,3].includes(p.count) || !DIFFICULTY_BLURBS[p.difficulty]) return null;
+    return p;
+  }catch(e){ return null; }
+}
+function saveSetupPrefs(count, difficulty){
+  try{ localStorage.setItem(SETUP_PREFS_KEY, JSON.stringify({count, difficulty})); }catch(e){ /* storage unavailable */ }
+}
 function wireStartScreen(){
-  let chosen = 2;
-  let chosenDifficulty = 'normal';
+  const saved = loadSetupPrefs();
+  let chosen = saved ? saved.count : 2;
+  let chosenDifficulty = saved ? saved.difficulty : 'normal';
+  if(saved){
+    document.querySelectorAll('.ai-count-btn').forEach(b=>{
+      b.classList.toggle('selected', parseInt(b.dataset.count)===chosen);
+    });
+    document.querySelectorAll('.diff-btn').forEach(b=>{
+      b.classList.toggle('selected', b.dataset.diff===chosenDifficulty);
+    });
+    document.getElementById('difficulty-blurb').textContent = DIFFICULTY_BLURBS[chosenDifficulty];
+  }
   document.querySelectorAll('.ai-count-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       document.querySelectorAll('.ai-count-btn').forEach(b=>b.classList.remove('selected'));
       btn.classList.add('selected');
       chosen = parseInt(btn.dataset.count);
+      saveSetupPrefs(chosen, chosenDifficulty);
     });
   });
   document.querySelectorAll('.diff-btn').forEach(btn=>{
@@ -1637,6 +1661,7 @@ function wireStartScreen(){
       btn.classList.add('selected');
       chosenDifficulty = btn.dataset.diff;
       document.getElementById('difficulty-blurb').textContent = DIFFICULTY_BLURBS[chosenDifficulty];
+      saveSetupPrefs(chosen, chosenDifficulty);
     });
   });
   document.getElementById('rules-panel').innerHTML = `
