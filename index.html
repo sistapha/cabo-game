@@ -378,7 +378,7 @@ function slotLabel(idx){
 /* ---------- Game setup ---------- */
 function newGame(numAI, difficulty){
   const players = [];
-  players.push({ id:0, name:'You', isHuman:true, slots:[], roundScore:0, totalScore:0 });
+  players.push({ id:0, name:'You', isHuman:true, slots:[], roundScore:0, totalScore:0, memory:{ own:[null,null,null,null], opp:{} } });
   const names = shuffle(AI_NAMES.slice());
   for(let i=0;i<numAI;i++){
     players.push({
@@ -410,8 +410,10 @@ function startRound(){
   for(const p of game.players){
     p.slots = [deck.pop(), deck.pop(), deck.pop(), deck.pop()];
     p.roundScore = 0;
+    // Everyone (human included) sees their own bottom two cards during the
+    // pre-round peek, so their memory starts out knowing those two slots.
+    p.memory.own = [null, null, p.slots[2].value, p.slots[3].value];
     if(!p.isHuman){
-      p.memory.own = [null, null, p.slots[2].value, p.slots[3].value];
       for(const oid in p.memory.opp) p.memory.opp[oid] = [null,null,null,null];
     }
   }
@@ -493,7 +495,6 @@ function ensureDrawPile(){
 /* ---------- Memory / shared mechanics ---------- */
 function clearMemoryForSlot(playerId, slotIdx){
   for(const p of game.players){
-    if(p.isHuman) continue;
     if(p.id===playerId) p.memory.own[slotIdx] = null;
     else if(p.memory.opp[playerId]) p.memory.opp[playerId][slotIdx] = null;
   }
@@ -520,12 +521,10 @@ function doPeekedSwap(actor, peeked, target){
   swapSlotsRaw(peeked, target);
   clearMemoryForSlot(peeked.player, peeked.slot);
   clearMemoryForSlot(target.player, target.slot);
-  if(!actor.isHuman){
-    if(target.player===actor.id) actor.memory.own[target.slot] = peekedCard.value;
-    else {
-      if(!actor.memory.opp[target.player]) actor.memory.opp[target.player] = [null,null,null,null];
-      actor.memory.opp[target.player][target.slot] = peekedCard.value;
-    }
+  if(target.player===actor.id) actor.memory.own[target.slot] = peekedCard.value;
+  else {
+    if(!actor.memory.opp[target.player]) actor.memory.opp[target.player] = [null,null,null,null];
+    actor.memory.opp[target.player][target.slot] = peekedCard.value;
   }
 }
 
@@ -549,10 +548,13 @@ function offerHumanShed(next){
   const top = game.discardPile[game.discardPile.length-1];
   const human = getPlayer(HUMAN_ID);
   // Skip the prompt entirely when it's plainly pointless: every live card is
-  // already face-up and none of them match, so there's zero chance of a
-  // shed and interrupting play to say so would just be noise. A face-down
-  // card always keeps the window open, since a blind guess is still legal.
-  const worthOffering = human.slots.some(c=>!c.removed && (!c.publicKnown || c.value===top.value));
+  // a value you already know (from a public reveal or your own memory of
+  // peeks/draws/swaps) and none of them match, so there's zero chance of a
+  // shed and interrupting play to say so would just be noise. A genuinely
+  // unknown card always keeps the window open, since a blind guess is still
+  // legal and re-evaluating fresh each time naturally stops re-prompting for
+  // a value you've already learned you don't have.
+  const worthOffering = human.slots.some((c,i)=>!c.removed && (knownValue(human, HUMAN_ID, i)===null || knownValue(human, HUMAN_ID, i)===top.value));
   if(!worthOffering){ next(false); return; }
   game.mode = 'shed-opportunity';
   game.pendingShed = { resolve: next };
@@ -564,7 +566,7 @@ function offerHumanShed(next){
     const resolve = game.pendingShed.resolve;
     game.pendingShed = null;
     resolve(false);
-  }, aiDelay(3200));
+  }, aiDelay(2000));
 }
 function handleHumanShedAttempt(slotIdx){
   const p = getPlayer(HUMAN_ID);
@@ -579,6 +581,7 @@ function handleHumanShedAttempt(slotIdx){
   if(isMatch){
     rawDiscardPush(card);
     p.slots[slotIdx] = makeEmptySlot();
+    p.memory.own[slotIdx] = null;
     logMsg(`You shed a matching ${cardLabel(card)}!`);
     hapticPulse(40);
     markChanged({player:HUMAN_ID, slot:slotIdx});
@@ -635,10 +638,8 @@ function placeCardInGrid(p, card){
   let idx;
   if(emptyIdx!==-1){ p.slots[emptyIdx] = card; idx = emptyIdx; }
   else { p.slots.push(card); idx = p.slots.length-1; }
-  if(!p.isHuman){
-    if(emptyIdx!==-1) p.memory.own[idx] = null;
-    else p.memory.own.push(null);
-  }
+  if(emptyIdx!==-1) p.memory.own[idx] = null;
+  else p.memory.own.push(null);
   for(const other of game.players){
     if(other.isHuman || other.id===p.id) continue;
     const arr = other.memory.opp[p.id];
@@ -674,6 +675,7 @@ function beginSwapOwn(){
     const incoming = game.pendingCard;
     if(game.pendingSource==='discard') incoming.publicKnown = true;
     const idx = placeCardInGrid(human, incoming);
+    human.memory.own[idx] = incoming.value;
     markChanged({player:HUMAN_ID, slot:idx});
     game.pendingCard = null;
     logMsg(`You placed the card as your only card.`);
@@ -769,6 +771,7 @@ function performSwap(playerId, slotIdx){
   const incoming = game.pendingCard;
   if(game.pendingSource==='discard') incoming.publicKnown = true;
   p.slots[slotIdx] = incoming;
+  p.memory.own[slotIdx] = incoming.value;
   markChanged({player:playerId, slot:slotIdx});
   rawDiscardPush(old);
   game.pendingCard = null;
@@ -777,6 +780,7 @@ function performSwap(playerId, slotIdx){
 }
 function performSelfPeek(playerId, slotIdx){
   const card = getPlayer(playerId).slots[slotIdx];
+  getPlayer(playerId).memory.own[slotIdx] = card.value;
   showInfoModal('You peek at your card', `${cardLabel(card)} — worth ${card.value} point${card.value===1?'':'s'}.`, endHumanTurnAfterAction);
 }
 function performOppPeek(playerId, slotIdx){
@@ -807,7 +811,7 @@ function performQueenPeekHuman(playerId, slotIdx){
   );
 }
 function performQueenSwapHuman(peeked, target){
-  doPeekedSwap({isHuman:true}, peeked, target);
+  doPeekedSwap(getPlayer(HUMAN_ID), peeked, target);
   logMsg(`You used the Queen's power to swap two cards.`);
   endHumanTurnAfterAction();
 }
