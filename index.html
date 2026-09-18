@@ -738,11 +738,24 @@ function discardPendingNoEffect(){
   logMsg(`You discarded ${cardLabel(c)}.`);
   endHumanTurnAfterAction();
 }
+// 10 and Queen require an opponent with at least one live card — if every
+// opponent has been fully shed away, there's nothing to target, so forfeit
+// the power immediately instead of leaving the UI in awaiting-target with
+// nothing clickable (mirrors the same check on the AI side).
+function humanHasOppTarget(){
+  return playersWithLiveSlots(game.players.filter(pl=>pl.id!==HUMAN_ID)).length>0;
+}
 function beginPowerFlow(pt){
-  if(pt==='self-peek') game.pendingAction = { type:'peek-own' };
-  else if(pt==='opp-spy') game.pendingAction = { type:'peek-opp' };
-  else if(pt==='blind-swap') game.pendingAction = { type:'blindswap-1' };
-  else if(pt==='queen-swap') game.pendingAction = { type:'queen-peek' };
+  if(pt==='self-peek'){ game.pendingAction = { type:'peek-own' }; }
+  else if(pt==='opp-spy'){
+    if(!humanHasOppTarget()){ logMsg(`You have no one to spy on.`); endHumanTurnAfterAction(); return; }
+    game.pendingAction = { type:'peek-opp' };
+  }
+  else if(pt==='blind-swap'){ game.pendingAction = { type:'blindswap-1' }; }
+  else if(pt==='queen-swap'){
+    if(!humanHasOppTarget()){ logMsg(`You have no one to target with the Queen's power.`); endHumanTurnAfterAction(); return; }
+    game.pendingAction = { type:'queen-peek' };
+  }
   game.mode = 'awaiting-target';
   render();
 }
