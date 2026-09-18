@@ -396,7 +396,7 @@ function newGame(numAI, difficulty){
   game = {
     players, round:1, drawPile:[], discardPile:[], turnOrder:[], turnIdx:0,
     mode:'peek', pendingAction:null, pendingCard:null, pendingSource:null, pendingShed:null,
-    caboCallerId:null, finalTurnsLeft:0, log:[], infoModal:null, showLog:false,
+    caboCallerId:null, zeroCaboCaller:false, log:[], infoModal:null, showLog:false,
     difficulty: difficulty || 'normal', fullValueCounts: buildValueCounts(), initialDrawPileSize: 0
   };
   startRound();
@@ -406,6 +406,7 @@ function startRound(){
   if(toastTimer){ clearTimeout(toastTimer); toastTimer=null; }
   activeToast = null;
   if(shedTimer){ clearTimeout(shedTimer); shedTimer=null; }
+  pendingZeroCabo = null;
   const deck = shuffle(buildDeck());
   for(const p of game.players){
     p.slots = [deck.pop(), deck.pop(), deck.pop(), deck.pop()];
@@ -427,7 +428,7 @@ function startRound(){
   }
   game.turnIdx = 0;
   game.caboCallerId = null;
-  game.finalTurnsLeft = 0;
+  game.zeroCaboCaller = false;
   game.mode = 'peek';
   game.pendingAction = null;
   game.pendingCard = null;
@@ -462,19 +463,44 @@ function advanceTurn(){
   game.pendingAction = null;
   game.pendingCard = null;
   game.pendingSource = null;
-  if(game.caboCallerId!==null){
-    game.finalTurnsLeft--;
-    if(game.finalTurnsLeft<=0){ endRound(); return; }
+  const nextIdx = (game.turnIdx+1) % game.turnOrder.length;
+  // Once someone's triggered CAMBIO (called or auto via an emptied grid),
+  // play keeps moving forward from wherever it currently is and stops the
+  // instant it would loop back around to the trigger's own seat — that
+  // seat doesn't get an extra turn.
+  if(game.caboCallerId!==null && game.turnOrder[nextIdx]===game.caboCallerId){
+    endRound();
+    return;
   }
-  game.turnIdx = (game.turnIdx+1) % game.turnOrder.length;
+  game.turnIdx = nextIdx;
   beginTurn();
 }
 function callCabo(playerId){
   game.caboCallerId = playerId;
-  game.finalTurnsLeft = game.players.length - 1;
+  game.zeroCaboCaller = false;
   logMsg(`${getPlayer(playerId).name} called CAMBIO!`);
   hapticPulse(playerId===HUMAN_ID ? 45 : [15,40,15]);
   advanceTurn();
+}
+// Set mid-shed-chain when a player's grid is fully shed away, and locked in
+// once that chain finishes resolving (see finishShedChain) so any other
+// player who can still match the same discarded rank gets to shed first.
+let pendingZeroCabo = null;
+function lockInZeroCabo(playerId){
+  if(game.caboCallerId!==null) return;
+  const p = getPlayer(playerId);
+  game.caboCallerId = playerId;
+  game.zeroCaboCaller = true;
+  logMsg(`${p.name} shed their last card — CAMBIO triggered automatically!`);
+  hapticPulse(playerId===HUMAN_ID ? 45 : [15,40,15]);
+}
+function finishShedChain(onAllDone){
+  if(pendingZeroCabo!==null){
+    const pid = pendingZeroCabo;
+    pendingZeroCabo = null;
+    lockInZeroCabo(pid);
+  }
+  onAllDone();
 }
 
 function ensureDrawPile(){
@@ -532,12 +558,13 @@ function doPeekedSwap(actor, peeked, target){
 function makeEmptySlot(){ return { uid: uidCounter++, suit:null, rank:null, value:0, publicKnown:true, removed:true }; }
 function rawDiscardPush(card){ game.discardPile.push(card); }
 function runShedChain(onAllDone){
-  if(!game || game.caboCallerId!==null || game.discardPile.length===0){ onAllDone(); return; }
+  if(!game){ onAllDone(); return; }
+  if(game.caboCallerId!==null || game.discardPile.length===0){ finishShedChain(onAllDone); return; }
   offerHumanShed(humanDidShed=>{
     if(humanDidShed){ runShedChain(onAllDone); return; }
     const aiDidShed = runAiShedChecks();
     if(aiDidShed){ runShedChain(onAllDone); return; }
-    onAllDone();
+    finishShedChain(onAllDone);
   });
 }
 // How long the shed window stays open before it auto-passes on its own —
@@ -585,6 +612,7 @@ function handleHumanShedAttempt(slotIdx){
     logMsg(`You shed a matching ${cardLabel(card)}!`);
     hapticPulse(40);
     markChanged({player:HUMAN_ID, slot:slotIdx});
+    if(pendingZeroCabo===null && game.caboCallerId===null && !p.slots.some(c=>!c.removed)) pendingZeroCabo = HUMAN_ID;
   } else {
     logMsg(`You tried to shed ${cardLabel(card)} — no match for the ${cardLabel(top)} on top. Drew a penalty card.`);
     hapticPulse([20,20,20]);
@@ -617,6 +645,7 @@ function runAiShedChecks(){
         markChanged({player:p.id, slot:i});
         logMsg(`${p.name} shed a matching ${cardLabel(card)}!`);
         hapticPulse([15,30]);
+        if(pendingZeroCabo===null && game.caboCallerId===null && !p.slots.some(c=>!c.removed)) pendingZeroCabo = p.id;
         return true;
       }
     }
@@ -1314,17 +1343,25 @@ function endRound(){
   if(game.caboCallerId!==null){
     const caller = getPlayer(game.caboCallerId);
     const rawScore = caller.roundScore;
-    const others = game.players.filter(pl=>pl.id!==caller.id);
-    const strictlyLowest = others.every(pl=>rawScore < pl.roundScore);
     if(caller.id===HUMAN_ID) caboCalledByHuman = true;
-    if(strictlyLowest){
+    if(game.zeroCaboCaller){
+      // Emptied their own grid before calling — that's a guaranteed 0 with
+      // no tie/beaten penalty exposure, regardless of what anyone else ends up with.
       caller.roundScore = Math.min(0, rawScore);
       if(caller.id===HUMAN_ID) humanCleanCall = true;
-      logMsg(`${caller.name} called it and had the strictly lowest hand — scores ${caller.roundScore}.`);
+      logMsg(`${caller.name} emptied their grid — scores ${caller.roundScore}, no penalty risk.`);
     } else {
-      caller.roundScore = rawScore + 10;
-      logMsg(`${caller.name} didn't have the strictly lowest score — +10 penalty (now ${caller.roundScore}).`);
-      if(caller.id===HUMAN_ID) hapticPulse([30,60,30,60,30]);
+      const others = game.players.filter(pl=>pl.id!==caller.id);
+      const strictlyLowest = others.every(pl=>rawScore < pl.roundScore);
+      if(strictlyLowest){
+        caller.roundScore = Math.min(0, rawScore);
+        if(caller.id===HUMAN_ID) humanCleanCall = true;
+        logMsg(`${caller.name} called it and had the strictly lowest hand — scores ${caller.roundScore}.`);
+      } else {
+        caller.roundScore = rawScore + 10;
+        logMsg(`${caller.name} didn't have the strictly lowest score — +10 penalty (now ${caller.roundScore}).`);
+        if(caller.id===HUMAN_ID) hapticPulse([30,60,30,60,30]);
+      }
     }
   }
   for(const p of game.players) p.totalScore += p.roundScore;
@@ -1504,7 +1541,7 @@ function rulesBody(){
   • From the deck: swap it into your grid, or discard it face-up to use its power.<br>
   • From the discard pile: it's already known, so you must swap it into your grid (it stays face-up forever).<br><br>
   Powers when discarding a drawn card: 9 peek one of your own cards &middot; 10 peek one of an opponent's &middot; J blind-swap one of your cards with one of an opponent's &middot; Q peek one of an opponent's cards, then choose whether to swap it with one of your own.<br><br>
-  Shedding: any time a card lands face-up on the discard pile, you can tap one of your own cards to try to shed a match — even a blind guess. A match empties that slot for good (worth 0). A miss returns the card and costs you a penalty card drawn face-down into your grid.<br><br>
+  Shedding: any time a card lands face-up on the discard pile, you can tap one of your own cards to try to shed a match — even a blind guess. A match empties that slot for good (worth 0). A miss returns the card and costs you a penalty card drawn face-down into your grid. If a shed empties your whole grid, CAMBIO is called automatically and locked in as a clean 0 — no tie or beaten penalty can touch it.<br><br>
   Call CAMBIO instead of drawing when you think you're low. Everyone else gets one last turn, then all cards flip. If you had the strictly lowest hand, your score resets to 0 (or stays negative if it already was). If you were tied or beaten, you take your total plus a 10-point penalty. First to 100 total points loses; lowest total overall wins the game.`;
 }
 function renderModals(){
@@ -1673,7 +1710,7 @@ function wireStartScreen(){
     <h4>Values</h4><p>Joker=−1, King=0 (any suit), Ace=1, 2–8 face value, 9=9, 10=10, J=11, Q=12.</p>
     <h4>Your turn</h4><p>Draw from the deck (swap it in, or discard it to use its power) or take the discard pile's top card (must swap it in — it's already known, and stays face-up forever).</p>
     <h4>Powers</h4><p>9 peek your own card &middot; 10 peek an opponent's &middot; J blind-swap one of your cards with an opponent's &middot; Q peek an opponent's card, then choose whether to swap it with one of your own.</p>
-    <h4>Shedding</h4><p>Whenever a card lands face-up on the discard pile, anyone can try shedding a matching card from their own grid — blind guesses allowed. A match empties that slot (worth 0 forever). A miss returns the card and adds a penalty card to your grid.</p>
+    <h4>Shedding</h4><p>Whenever a card lands face-up on the discard pile, anyone can try shedding a matching card from their own grid — blind guesses allowed. A match empties that slot (worth 0 forever). A miss returns the card and adds a penalty card to your grid. Empty your whole grid and CAMBIO is called for you automatically, locked in as a clean 0 with no penalty risk.</p>
     <h4>Ending a round</h4><p>Call CAMBIO when you think you're lowest. Everyone else gets one last turn, then hands are revealed. A clean call (strictly lowest) resets your score to 0 or better; a failed call adds a 10-point penalty to your actual total.</p>
     <h4>Winning</h4><p>Play rounds until someone reaches 100 points. Lowest total wins.</p>
     <h4>Difficulty</h4><p><b>Easy</b> — ${DIFFICULTY_BLURBS.easy}</p><p><b>Normal</b> — ${DIFFICULTY_BLURBS.normal}</p><p><b>Hard</b> — ${DIFFICULTY_BLURBS.hard}</p>
