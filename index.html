@@ -127,6 +127,7 @@
   .seat{ display:flex; flex-direction:column; align-items:center; gap:6px; }
   .seat-label{ font-size:.85rem; font-weight:600; color:var(--cream); opacity:.9; }
   .cabo-tag{ background:var(--danger); color:var(--cream); font-size:.68rem; padding:2px 7px; border-radius:999px; margin-left:4px; letter-spacing:.03em; }
+  .card-count-badge{ background:rgba(234,200,115,0.18); color:var(--gold-bright); font-size:.68rem; font-weight:700; border-radius:999px; padding:1px 7px; margin-left:6px; border:1px solid rgba(234,200,115,0.4); vertical-align:1px; }
 
   .grid{ display:grid; grid-template-columns: repeat(2, var(--card-w)); gap:7px; }
   .slot{
@@ -139,7 +140,18 @@
     background: repeating-linear-gradient(45deg, var(--felt-dark), var(--felt-dark) 6px, var(--felt) 6px, var(--felt) 12px);
     border:2px solid var(--gold);
   }
-  .card-back.empty{ background:rgba(255,255,255,0.06); border:2px dashed rgba(244,239,225,0.3); }
+  /* Slot for a shed/removed card. Deliberately stays in the grid (no reflow)
+     so card positions — the thing you're memorizing — never shift; the
+     checkmark + inset "hole" reads as intentionally cleared, not a bug. */
+  .card-back.empty{
+    background:rgba(255,255,255,0.03); border:2px dashed rgba(244,239,225,0.28);
+    box-shadow:inset 0 2px 8px rgba(0,0,0,0.3);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .card-back.empty::after{
+    content:'\2713'; color:rgba(244,239,225,0.4); font-family:'Fraunces',serif; font-weight:700;
+    font-size:calc(var(--card-w)*0.34);
+  }
   .card-face{
     width:100%; height:100%; border-radius:9px; background:var(--cream); border:2px solid rgba(0,0,0,0.15);
     box-sizing:border-box; position:relative; display:flex; align-items:center; justify-content:center;
@@ -165,6 +177,18 @@
     .card-changed{ animation:none; }
   }
 
+  /* Slot glow while its toast is on screen — points at exactly which slot(s)
+     an AI's peek/swap touched, for as long as the text is readable, so you
+     know where to aim if you want that card back. */
+  @keyframes slot-pulse{
+    0%,100%{ box-shadow:0 0 0 3px var(--gold-bright), 0 0 10px 2px rgba(234,200,115,.5); }
+    50%{ box-shadow:0 0 0 3px var(--gold-bright), 0 0 18px 6px rgba(234,200,115,.85); }
+  }
+  .slot-highlight{ animation: slot-pulse 1.1s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce){
+    .slot-highlight{ animation:none; box-shadow:0 0 0 3px var(--gold-bright); }
+  }
+
   .center-row{ display:flex; gap:26px; justify-content:center; align-items:flex-start; padding:10px 0; }
   .pile-wrap{ display:flex; flex-direction:column; align-items:center; gap:6px; }
   .pile{ width:var(--card-w); height:var(--card-h); border:none; padding:0; background:transparent; position:relative; cursor:default; border-radius:9px; }
@@ -184,15 +208,39 @@
   #btn-cabo:not(:disabled){ background:var(--danger); border-color:var(--danger); color:var(--cream); }
   #btn-fast.on{ background:var(--gold-bright); border-color:var(--gold-bright); color:var(--ink); }
 
-  .hint-banner{
-    position:fixed; top:calc(env(safe-area-inset-top) + 10px); left:50%; transform:translateX(-50%);
-    background:var(--gold-bright); color:var(--ink); padding:9px 18px; border-radius:999px;
-    font-size:.85rem; font-weight:600; box-shadow:0 6px 16px rgba(0,0,0,.35); z-index:20; text-align:center; max-width:88vw;
+  .more-menu-wrap{ position:relative; }
+  .more-menu{
+    position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+    background:rgba(10,26,19,0.97); border:1.5px solid rgba(234,200,115,0.4); border-radius:12px;
+    padding:6px; display:flex; flex-direction:column; gap:2px; min-width:130px;
+    box-shadow:0 8px 20px rgba(0,0,0,.4); z-index:30;
   }
-  .hint-banner-actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center; }
-  .hint-banner-actions button{
+  .more-menu button{
+    background:transparent; border:none; color:var(--cream); text-align:left; padding:10px 12px;
+    border-radius:8px; font-size:.9rem; font-weight:600; cursor:pointer;
+  }
+  .more-menu button:active{ background:rgba(234,200,115,0.15); }
+  .menu-backdrop{ position:fixed; inset:0; z-index:29; background:transparent; }
+
+  /* Slim single-line banner, in normal document flow right under the
+     scoreboard — deliberately capped so it can never grow to cover the
+     opponent grid beneath it, and in-flow (not fixed) so it pushes that
+     grid down instead of sitting on top of the scoreboard chips. */
+  .hint-banner-wrap{ display:flex; justify-content:center; }
+  .hint-banner{
+    background:var(--gold-bright); color:var(--ink); padding:8px 16px; border-radius:999px;
+    font-size:.82rem; font-weight:600; line-height:1.3; box-shadow:0 6px 16px rgba(0,0,0,.35); text-align:center; max-width:88vw;
+  }
+  .shed-hint{ padding:7px 8px 7px 16px; }
+  .shed-hint-row{ display:flex; align-items:center; gap:10px; white-space:nowrap; }
+  .shed-hint-label{ font-weight:700; }
+  .shed-timer-track{ width:52px; height:6px; border-radius:999px; background:rgba(10,26,19,0.25); overflow:hidden; flex-shrink:0; }
+  .shed-timer-fill{ height:100%; width:100%; background:var(--ink); border-radius:999px; transform-origin:left; animation:shed-countdown linear forwards; }
+  @keyframes shed-countdown{ from{ transform:scaleX(1); } to{ transform:scaleX(0); } }
+  @media (prefers-reduced-motion: reduce){ .shed-timer-fill{ animation:none; width:50%; } }
+  .shed-pass-btn{
     background:var(--ink); color:var(--cream); border:none; border-radius:999px;
-    padding:6px 14px; font-size:.8rem; font-weight:700; cursor:pointer; flex-shrink:0;
+    padding:6px 13px; font-size:.78rem; font-weight:700; cursor:pointer; flex-shrink:0;
   }
   /* Fixed corner control so it never competes with the action bar's width
      on narrow phones — a 5th button there would risk overflowing/hiding on
@@ -305,6 +353,9 @@ let game = null;
 let fastForward = false;
 // Scales down the deliberately-paced AI "thinking" delays when Fast mode is on.
 function aiDelay(ms){ return fastForward ? Math.max(60, Math.round(ms/5)) : ms; }
+// Whether the action-bar's "⋯" overflow menu (Log/Rules) is open — transient
+// UI state, not part of `game`, so it never gets persisted or restored.
+let moreMenuOpen = false;
 
 // Non-blocking banner for AI actions that touch the human's own cards (a
 // swap or a peek) — kept out of `game` (not persisted) since it's a
@@ -312,8 +363,11 @@ function aiDelay(ms){ return fastForward ? Math.max(60, Math.round(ms/5)) : ms; 
 let activeToast = null;
 let toastTimer = null;
 let toastCounter = 0;
-function showToast(msg){
-  activeToast = { id: ++toastCounter, msg };
+// `highlightSlots` (optional array of {player,slot}) pulses those slots for
+// as long as the toast is on screen, so the affected card(s) are as easy to
+// spot as the text is to read.
+function showToast(msg, highlightSlots){
+  activeToast = { id: ++toastCounter, msg, highlightSlots: highlightSlots||[] };
   if(toastTimer) clearTimeout(toastTimer);
   const id = activeToast.id;
   // Scales with message length (these can now spell out a full card and
@@ -1077,7 +1131,7 @@ function aiUsePower(p, pt){
     logMsg(`${p.name} peeked at one of ${target.isHuman ? 'your' : target.name+"'s"} cards.`);
     // Position only — the card's value stays hidden from you, same as it
     // would if you hadn't peeked at it yourself.
-    if(target.isHuman) showToast(`${p.name} peeked at your ${slotLabel(slot)} card.`);
+    if(target.isHuman) showToast(`${p.name} peeked your ${slotLabel(slot)}.`, [{player:target.id, slot}]);
     setTimeout(endAiTurnAfterAction, aiDelay(700));
   } else if(pt==='blind-swap'){
     const worst = aiWorstKnownSlot(p);
@@ -1116,9 +1170,9 @@ function aiUsePower(p, pt){
       if(target && tSlot!==-1){
         doBlindSwap({player:p.id, slot:worst.slot}, {player:target.id, slot:tSlot});
         logMsg(`${p.name} blind-swapped one of their cards with ${target.isHuman ? 'yours' : target.name+"'s"}.`);
-        // Nobody — not even ${p.name} — knows what card landed here; that's
-        // what makes it a *blind* swap, so only the position is revealed.
-        if(target.isHuman) showToast(`${p.name} blind-swapped a card into your ${slotLabel(tSlot)} slot — nobody knows what it is yet.`);
+        // Nobody — not even ${p.name} — knows what card landed where, so only
+        // positions are revealed: your old card is now sitting in their slot.
+        if(target.isHuman) showToast(`${p.name} swapped your ${slotLabel(tSlot)} for their ${slotLabel(worst.slot)}.`, [{player:target.id, slot:tSlot}, {player:p.id, slot:worst.slot}]);
       } else {
         logMsg(`${p.name} had no one to swap with.`);
       }
@@ -1157,7 +1211,7 @@ function aiUsePower(p, pt){
       if(bestSlot!==null && bestVal < worstVal - 0.5 && ownSlot!==-1){
         doPeekedSwap(p, {player:target.id, slot:bestSlot}, {player:p.id, slot:ownSlot});
         logMsg(`${p.name} used the Queen's power to swap in ${target.isHuman?'your':target.name+"'s"} already-known card.`);
-        if(target.isHuman) showToast(`${p.name} used the Queen's power to swap out your ${slotLabel(bestSlot)} card.`);
+        if(target.isHuman) showToast(`${p.name} swapped your ${slotLabel(bestSlot)} for their ${slotLabel(ownSlot)}.`, [{player:target.id, slot:bestSlot}, {player:p.id, slot:ownSlot}]);
       } else {
         logMsg(`${p.name} discarded the Queen without using its power — nothing worth targeting.`);
       }
@@ -1174,16 +1228,16 @@ function aiUsePower(p, pt){
     // Position only, never the value — built up and shown as ONE toast below
     // (never two in a row) since a second showToast() would silently cut off
     // the first before it's readable.
-    const peekMsg = `${p.name} used the Queen's power to peek at your ${slotLabel(slot)} card.`;
+    const peekMsg = `${p.name} peeked your ${slotLabel(slot)}.`;
 
     const shouldSwap = seenValue < worstVal - 0.5;
     if(shouldSwap && ownSlot!==-1){
       doPeekedSwap(p, {player:target.id, slot}, {player:p.id, slot:ownSlot});
       logMsg(`${p.name} swapped it in for one of their own.`);
-      if(target.isHuman) showToast(`${peekMsg} They swapped it into their own grid.`);
+      if(target.isHuman) showToast(`${p.name} peeked your ${slotLabel(slot)}, swapped for their ${slotLabel(ownSlot)}.`, [{player:target.id, slot}, {player:p.id, slot:ownSlot}]);
     } else {
       logMsg(`${p.name} chose not to swap.`);
-      if(target.isHuman) showToast(peekMsg);
+      if(target.isHuman) showToast(peekMsg, [{player:target.id, slot}]);
     }
     setTimeout(endAiTurnAfterAction, aiDelay(900));
   } else {
@@ -1444,7 +1498,8 @@ function renderSlot(playerId, slotIdx, card){
   const targetSelectable = game.mode==='awaiting-target' && isSelectable(playerId, slotIdx);
   const selectable = shedSelectable || targetSelectable;
   const changed = animatedSlots.some(c=>c.player===playerId && c.slot===slotIdx);
-  return `<button class="slot ${selectable?'selectable':''} ${changed?'card-changed':''}" data-player="${playerId}" data-slot="${slotIdx}" ${selectable?'':'disabled'}>
+  const highlighted = !!(activeToast && activeToast.highlightSlots && activeToast.highlightSlots.some(h=>h.player===playerId && h.slot===slotIdx));
+  return `<button class="slot ${selectable?'selectable':''} ${changed?'card-changed':''} ${highlighted?'slot-highlight':''}" data-player="${playerId}" data-slot="${slotIdx}" ${selectable?'':'disabled'}>
     ${faceUp ? renderCardFace(card) : '<div class="card-back"></div>'}
   </button>`;
 }
@@ -1454,6 +1509,7 @@ function renderGrid(player){
   html += '</div>';
   return html;
 }
+function liveCardCount(player){ return player.slots.filter(c=>!c.removed).length; }
 function targetHintText(){
   const a = game.pendingAction;
   if(!a) return '';
@@ -1487,9 +1543,28 @@ function render(){
     </div>`;
   }).join('')}</div>`;
 
+  // In-flow (not fixed) so it pushes the opponent grid down instead of
+  // floating on top of the scoreboard chips above it. Suppressed while any
+  // modal overlay is up, mirroring the priority order renderModals() uses.
+  const modalBlocking = !!game.infoModal || ['peek','human-drawn','round-end','game-over'].includes(game.mode);
+  if(!modalBlocking){
+    if(game.mode==='awaiting-target'){
+      html += `<div class="hint-banner-wrap"><div class="hint-banner">${targetHintText()}</div></div>`;
+    } else if(game.mode==='shed-opportunity'){
+      const top = game.discardPile[game.discardPile.length-1];
+      html += `<div class="hint-banner-wrap"><div class="hint-banner shed-hint"><div class="shed-hint-row">
+        <span class="shed-hint-label">Shed ${cardLabel(top)}</span>
+        <div class="shed-timer-track"><div class="shed-timer-fill" style="animation-duration:${aiDelay(2000)}ms"></div></div>
+        <button id="shed-pass" class="shed-pass-btn">Pass</button>
+      </div></div></div>`;
+    } else if(game.mode==='ai-turn'){
+      html += `<div class="hint-banner-wrap"><div class="hint-banner">${getPlayer(currentPlayerId()).name} is thinking…</div></div>`;
+    }
+  }
+
   html += `<div class="opponents-row">${opponents.map(p=>`
     <div class="seat">
-      <div class="seat-label">${p.name}${game.caboCallerId===p.id?' <span class="cabo-tag">CAMBIO</span>':''}</div>
+      <div class="seat-label">${p.name}<span class="card-count-badge">${liveCardCount(p)}</span>${game.caboCallerId===p.id?' <span class="cabo-tag">CAMBIO</span>':''}</div>
       ${renderGrid(p)}
     </div>`).join('')}</div>`;
 
@@ -1513,16 +1588,22 @@ function render(){
   </div>`;
 
   html += `<div class="seat player-seat">
-    <div class="seat-label">You${game.caboCallerId===HUMAN_ID?' <span class="cabo-tag">CAMBIO</span>':''}</div>
+    <div class="seat-label">You<span class="card-count-badge">${liveCardCount(human)}</span>${game.caboCallerId===HUMAN_ID?' <span class="cabo-tag">CAMBIO</span>':''}</div>
     ${renderGrid(human)}
   </div>`;
 
   html += `<div class="action-bar">
     <button id="btn-cabo" ${caboDisabled?'disabled':''}>Call CAMBIO</button>
-    <button id="btn-log">Log</button>
-    <button id="btn-rules">Rules</button>
+    <div class="more-menu-wrap">
+      <button id="btn-more" aria-haspopup="true" aria-expanded="${moreMenuOpen}">&#8943;</button>
+      ${moreMenuOpen ? `<div class="more-menu">
+        <button id="menu-log">Log</button>
+        <button id="menu-rules">Rules</button>
+      </div>` : ''}
+    </div>
     <button id="btn-fast" class="${fastForward?'on':''}" title="Speed through AI turn pacing">${fastForward?'Fast ✓':'Fast'}</button>
   </div>`;
+  if(moreMenuOpen) html += `<div class="menu-backdrop" id="menu-backdrop"></div>`;
 
   if(activeToast) html += `<div class="toast-banner">${activeToast.msg}</div>`;
 
@@ -1538,10 +1619,14 @@ function attachHandlers(){
   const dp = document.getElementById('draw-pile'); if(dp) dp.addEventListener('click', humanDrawDeck);
   const disc = document.getElementById('discard-pile'); if(disc) disc.addEventListener('click', humanDrawDiscard);
   const cabo = document.getElementById('btn-cabo'); if(cabo) cabo.addEventListener('click', ()=>callCabo(HUMAN_ID));
-  const logBtn = document.getElementById('btn-log'); if(logBtn) logBtn.addEventListener('click', ()=>{ game.showLog=true; render(); });
-  const rulesBtn = document.getElementById('btn-rules'); if(rulesBtn) rulesBtn.addEventListener('click', ()=>{
+  const moreBtn = document.getElementById('btn-more'); if(moreBtn) moreBtn.addEventListener('click', ()=>{ moreMenuOpen = !moreMenuOpen; render(); });
+  const menuLog = document.getElementById('menu-log'); if(menuLog) menuLog.addEventListener('click', ()=>{ moreMenuOpen=false; game.showLog=true; render(); });
+  const menuRules = document.getElementById('menu-rules'); if(menuRules) menuRules.addEventListener('click', ()=>{
+    moreMenuOpen=false;
     showInfoModal('How to play', rulesBody(), ()=>{});
   });
+  const menuBackdrop = document.getElementById('menu-backdrop'); if(menuBackdrop) menuBackdrop.addEventListener('click', ()=>{ moreMenuOpen=false; render(); });
+  const shedPass = document.getElementById('shed-pass'); if(shedPass) shedPass.addEventListener('click', handleHumanShedPass);
   const fastBtn = document.getElementById('btn-fast'); if(fastBtn) fastBtn.addEventListener('click', ()=>{
     fastForward = !fastForward;
     render();
@@ -1615,13 +1700,6 @@ function renderModals(){
       </div>
       <div class="modal-actions"><button id="play-again">Play again</button></div>
     </div></div>`;
-  } else if(game.mode==='awaiting-target'){
-    html += `<div class="hint-banner">${targetHintText()}</div>`;
-  } else if(game.mode==='shed-opportunity'){
-    const top = game.discardPile[game.discardPile.length-1];
-    html += `<div class="hint-banner"><div class="hint-banner-actions"><span>${cardLabel(top)} is on top — tap a card to try a shed, or it'll move on in a moment.</span><button id="shed-pass">Pass</button></div></div>`;
-  } else if(game.mode==='ai-turn'){
-    html += `<div class="hint-banner">${getPlayer(currentPlayerId()).name} is thinking…</div>`;
   }
   if(game.showLog){
     html += `<div class="overlay"><div class="modal wide">
@@ -1656,7 +1734,6 @@ function wireModalHandlers(){
   const nextRoundBtn = document.getElementById('next-round'); if(nextRoundBtn) nextRoundBtn.onclick = nextRound;
   const playAgainBtn = document.getElementById('play-again'); if(playAgainBtn) playAgainBtn.onclick = showStartScreen;
   const logClose = document.getElementById('log-close'); if(logClose) logClose.onclick = ()=>{ game.showLog=false; render(); };
-  const shedPass = document.getElementById('shed-pass'); if(shedPass) shedPass.onclick = handleHumanShedPass;
 }
 
 /* ---------- Start screen ---------- */
