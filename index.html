@@ -1135,47 +1135,48 @@ function aiUsePower(p, pt){
     setTimeout(endAiTurnAfterAction, aiDelay(700));
   } else if(pt==='blind-swap'){
     const worst = aiWorstKnownSlot(p);
-    if(worst && worst.value>=8){
-      let target=null, tSlot=null;
-      if(p.difficulty==='hard'){
-        // Scans every known low card rather than stopping at the first one,
-        // so it swaps away for the single best card it has a read on.
-        let bestV = Infinity;
-        for(const other of game.players){
-          if(other.id===p.id) continue;
-          for(let i=0;i<other.slots.length;i++){
-            if(other.slots[i].removed) continue;
-            const v = knownValue(p, other.id, i);
-            if(v!==null && v<=3 && v<bestV){ bestV=v; target=other; tSlot=i; }
-          }
-        }
-      } else if(p.difficulty==='normal'){
-        outer:
-        for(const other of game.players){
-          if(other.id===p.id) continue;
-          for(let i=0;i<other.slots.length;i++){
-            if(other.slots[i].removed) continue;
-            const v = knownValue(p, other.id, i);
-            if(v!==null && v<=3){ target=other; tSlot=i; break outer; }
-          }
+    const worstVal = worst ? worst.value : unseenEstimateFor(p);
+    const others = playersWithLiveSlots(game.players.filter(pl=>pl.id!==p.id));
+    let target=null, tSlot=null;
+    // Look for anyone's already-known low card (public reveal or an earlier
+    // peek) worth stealing — scans every live opponent, not just one, and
+    // doesn't require the AI to already know one of ITS OWN cards is bad:
+    // an unknown card of its own is, on average, worse than a proven low
+    // card, so there's no reason to pass one up just because nothing about
+    // your own hand is confirmed yet.
+    if(p.difficulty==='hard'){
+      // Scans every known low card rather than stopping at the first one,
+      // so it swaps away for the single best card it has a read on.
+      let bestV = Infinity;
+      for(const other of others){
+        for(let i=0;i<other.slots.length;i++){
+          if(other.slots[i].removed) continue;
+          const v = knownValue(p, other.id, i);
+          if(v!==null && v<=3 && v<bestV){ bestV=v; target=other; tSlot=i; }
         }
       }
-      if(!target){
-        const others = playersWithLiveSlots(game.players.filter(pl=>pl.id!==p.id));
-        if(others.length){
-          target = chooseAiTarget(p, others);
-          tSlot = aiAnySlot(target);
+    } else if(p.difficulty==='normal'){
+      outer:
+      for(const other of others){
+        for(let i=0;i<other.slots.length;i++){
+          if(other.slots[i].removed) continue;
+          const v = knownValue(p, other.id, i);
+          if(v!==null && v<=3){ target=other; tSlot=i; break outer; }
         }
       }
-      if(target && tSlot!==-1){
-        doBlindSwap({player:p.id, slot:worst.slot}, {player:target.id, slot:tSlot});
-        logMsg(`${p.name} blind-swapped one of their cards with ${target.isHuman ? 'yours' : target.name+"'s"}.`);
-        // Nobody — not even ${p.name} — knows what card landed where, so only
-        // positions are revealed: your old card is now sitting in their slot.
-        if(target.isHuman) showToast(`${p.name} swapped your ${slotLabel(tSlot)} for their ${slotLabel(worst.slot)}.`, [{player:target.id, slot:tSlot}, {player:p.id, slot:worst.slot}]);
-      } else {
-        logMsg(`${p.name} had no one to swap with.`);
-      }
+    }
+    if(target && !(knownValue(p, target.id, tSlot) < worstVal - 0.5)){ target=null; tSlot=null; }
+    if(!target && worst && worst.value>=8 && others.length){
+      target = chooseAiTarget(p, others);
+      tSlot = aiAnySlot(target);
+    }
+    if(target && tSlot!==-1){
+      const swapSlot = worst ? worst.slot : (aiRandomUnknownSlot(p) ?? aiAnySlot(p));
+      doBlindSwap({player:p.id, slot:swapSlot}, {player:target.id, slot:tSlot});
+      logMsg(`${p.name} blind-swapped one of their cards with ${target.isHuman ? 'yours' : target.name+"'s"}.`);
+      // Nobody — not even ${p.name} — knows what card landed where, so only
+      // positions are revealed: your old card is now sitting in their slot.
+      if(target.isHuman) showToast(`${p.name} swapped your ${slotLabel(tSlot)} for their ${slotLabel(swapSlot)}.`, [{player:target.id, slot:tSlot}, {player:p.id, slot:swapSlot}]);
     } else {
       logMsg(`${p.name} chose not to use the swap power.`);
     }
@@ -1187,34 +1188,41 @@ function aiUsePower(p, pt){
       setTimeout(endAiTurnAfterAction, aiDelay(900));
       return;
     }
-    const target = chooseAiTarget(p, others);
-    const unknownSlots = [], liveSlots = [];
-    for(let i=0;i<target.slots.length;i++){
-      if(target.slots[i].removed) continue;
-      liveSlots.push(i);
-      if(knownValue(p, target.id, i)===null) unknownSlots.push(i);
-    }
     const worst = aiWorstKnownSlot(p);
     const worstVal = worst ? worst.value : unseenEstimateFor(p);
     const ownSlot = worst ? worst.slot : (aiRandomUnknownSlot(p) ?? aiAnySlot(p));
 
+    // First choice: an opponent's card whose value is ALREADY known (public
+    // reveal or an earlier peek) — no need to gamble on an unknown slot when
+    // a proven-good card is sitting right there. Scans every live opponent,
+    // not just one randomly chosen target, so a face-up Joker/King/Ace never
+    // gets passed over just because it happens to be on someone else's grid.
+    let bestKnownPlayer=null, bestKnownSlot=null, bestKnownVal=Infinity;
+    for(const other of others){
+      for(let i=0;i<other.slots.length;i++){
+        if(other.slots[i].removed) continue;
+        const v = knownValue(p, other.id, i);
+        if(v!==null && v<bestKnownVal){ bestKnownVal=v; bestKnownPlayer=other; bestKnownSlot=i; }
+      }
+    }
+    if(bestKnownPlayer && bestKnownVal < worstVal - 0.5 && ownSlot!==-1){
+      doPeekedSwap(p, {player:bestKnownPlayer.id, slot:bestKnownSlot}, {player:p.id, slot:ownSlot});
+      logMsg(`${p.name} used the Queen's power to swap in ${bestKnownPlayer.isHuman?'your':bestKnownPlayer.name+"'s"} already-known card.`);
+      if(bestKnownPlayer.isHuman) showToast(`${p.name} swapped your ${slotLabel(bestKnownSlot)} for their ${slotLabel(ownSlot)}.`, [{player:bestKnownPlayer.id, slot:bestKnownSlot}, {player:p.id, slot:ownSlot}]);
+      setTimeout(endAiTurnAfterAction, aiDelay(800));
+      return;
+    }
+
+    // Otherwise there's nothing already worth taking — pick a target and
+    // actually spend the peek on one of their unknown slots.
+    const target = chooseAiTarget(p, others);
+    const unknownSlots = [];
+    for(let i=0;i<target.slots.length;i++){
+      if(target.slots[i].removed) continue;
+      if(knownValue(p, target.id, i)===null) unknownSlots.push(i);
+    }
     if(!unknownSlots.length){
-      // Every one of this target's live cards is already known (public or
-      // memorized) — there's nothing left to learn, so don't spend the
-      // power pretending to "peek" at it. Either take the best already-known
-      // card outright, or don't use the power at all.
-      let bestSlot=null, bestVal=Infinity;
-      for(const i of liveSlots){
-        const v = knownValue(p, target.id, i);
-        if(v<bestVal){ bestVal=v; bestSlot=i; }
-      }
-      if(bestSlot!==null && bestVal < worstVal - 0.5 && ownSlot!==-1){
-        doPeekedSwap(p, {player:target.id, slot:bestSlot}, {player:p.id, slot:ownSlot});
-        logMsg(`${p.name} used the Queen's power to swap in ${target.isHuman?'your':target.name+"'s"} already-known card.`);
-        if(target.isHuman) showToast(`${p.name} swapped your ${slotLabel(bestSlot)} for their ${slotLabel(ownSlot)}.`, [{player:target.id, slot:bestSlot}, {player:p.id, slot:ownSlot}]);
-      } else {
-        logMsg(`${p.name} discarded the Queen without using its power — nothing worth targeting.`);
-      }
+      logMsg(`${p.name} discarded the Queen without using its power — nothing worth targeting.`);
       setTimeout(endAiTurnAfterAction, aiDelay(800));
       return;
     }
