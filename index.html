@@ -455,7 +455,7 @@ function newGame(numAI, difficulty, targetScore){
   game = {
     players, round:1, drawPile:[], discardPile:[], turnOrder:[], turnIdx:0,
     mode:'peek', pendingAction:null, pendingCard:null, pendingSource:null, pendingShed:null,
-    caboCallerId:null, zeroCaboCaller:false, log:[], infoModal:null, showLog:false,
+    caboCallerId:null, zeroCaboCaller:false, finalTurnSeats:null, turnWasInformed:false, log:[], infoModal:null, showLog:false,
     difficulty: difficulty || 'normal', targetScore: targetScore || 100, fullValueCounts: buildValueCounts(), initialDrawPileSize: 0
   };
   startRound();
@@ -488,6 +488,8 @@ function startRound(){
   game.turnIdx = 0;
   game.caboCallerId = null;
   game.zeroCaboCaller = false;
+  game.finalTurnSeats = null;
+  game.turnWasInformed = false;
   game.mode = 'peek';
   game.pendingAction = null;
   game.pendingCard = null;
@@ -509,6 +511,10 @@ function logMsg(msg){ game.log.push(msg); if(game.log.length>250) game.log.shift
 /* ---------- Turn flow ---------- */
 function beginTurn(){
   const p = getPlayer(currentPlayerId());
+  // Snapshot whether CAMBIO was already in effect before this seat acts —
+  // advanceTurn needs this to tell an "informed" final turn (played knowing
+  // the round is ending) apart from the turn that happened to trigger it.
+  game.turnWasInformed = !!game.finalTurnSeats;
   if(p.isHuman){
     game.mode = 'human-turn';
     render();
@@ -522,14 +528,29 @@ function advanceTurn(){
   game.pendingAction = null;
   game.pendingCard = null;
   game.pendingSource = null;
-  const nextIdx = (game.turnIdx+1) % game.turnOrder.length;
-  // Once someone's triggered CAMBIO (called or auto via an emptied grid),
-  // play keeps moving forward from wherever it currently is and stops the
-  // instant it would loop back around to the trigger's own seat — that
-  // seat doesn't get an extra turn.
-  if(game.caboCallerId!==null && game.turnOrder[nextIdx]===game.caboCallerId){
-    endRound();
-    return;
+  // Once someone's triggered CAMBIO (called on their own turn, or auto via
+  // an emptied grid shed reactively during someone ELSE's turn), every seat
+  // but the caller's is owed exactly one INFORMED turn — one played knowing
+  // the round is about to end — before the round can close. A trigger that
+  // fires mid-turn doesn't retroactively make that already-in-progress turn
+  // informed, so that seat stays owed until it comes around again.
+  if(game.caboCallerId!==null){
+    if(!game.finalTurnSeats){
+      game.finalTurnSeats = game.players.map(pl=>pl.id).filter(id=>id!==game.caboCallerId);
+    }
+    if(game.turnWasInformed){
+      game.finalTurnSeats = game.finalTurnSeats.filter(id=>id!==currentPlayerId());
+    }
+    if(game.finalTurnSeats.length===0){
+      endRound();
+      return;
+    }
+  }
+  let nextIdx = (game.turnIdx+1) % game.turnOrder.length;
+  // The caller's own seat never gets a turn once CAMBIO is in effect — skip
+  // straight past it instead of stopping there.
+  while(game.caboCallerId!==null && game.turnOrder[nextIdx]===game.caboCallerId){
+    nextIdx = (nextIdx+1) % game.turnOrder.length;
   }
   game.turnIdx = nextIdx;
   beginTurn();
